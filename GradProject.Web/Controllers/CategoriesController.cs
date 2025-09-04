@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Data.Entity;
 using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
 using GradProject.Web.Models;
 
@@ -12,7 +9,7 @@ namespace GradProject.Web.Controllers
 {
     public class CategoriesController : Controller
     {
-        private ApplicationDbContext db = new ApplicationDbContext();
+        private readonly ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Categories
         public ActionResult Index()
@@ -23,15 +20,11 @@ namespace GradProject.Web.Controllers
         // GET: Categories/Details/5
         public ActionResult Details(int? id)
         {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Category category = db.Categories.Find(id);
-            if (category == null)
-            {
-                return HttpNotFound();
-            }
+            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+
+            var category = db.Categories.Find(id);
+            if (category == null) return HttpNotFound();
+
             return View(category);
         }
 
@@ -42,16 +35,17 @@ namespace GradProject.Web.Controllers
         }
 
         // POST: Categories/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        // CreatedAt لا نستقبلها من المستخدم – نحدّدها من السيرفر
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Id,Name,Description,CreatedAt")] Category category)
+        public ActionResult Create([Bind(Include = "Id,Name,Description")] Category category)
         {
             if (ModelState.IsValid)
             {
+                category.CreatedAt = DateTime.UtcNow; // set by server
                 db.Categories.Add(category);
                 db.SaveChanges();
+                TempData["Success"] = "Category created successfully.";
                 return RedirectToAction("Index");
             }
 
@@ -61,46 +55,45 @@ namespace GradProject.Web.Controllers
         // GET: Categories/Edit/5
         public ActionResult Edit(int? id)
         {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Category category = db.Categories.Find(id);
-            if (category == null)
-            {
-                return HttpNotFound();
-            }
+            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+
+            var category = db.Categories.Find(id);
+            if (category == null) return HttpNotFound();
+
             return View(category);
         }
 
         // POST: Categories/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for 
-        // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
+        // نحافظ على CreatedAt كما هو، ونعدّل فقط الحقول المسموح بها
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "Id,Name,Description,CreatedAt")] Category category)
+        public ActionResult Edit([Bind(Include = "Id,Name,Description")] Category input)
         {
             if (ModelState.IsValid)
             {
-                db.Entry(category).State = EntityState.Modified;
+                var category = db.Categories.Find(input.Id);
+                if (category == null) return HttpNotFound();
+
+                category.Name = input.Name;
+                category.Description = input.Description;
+                // CreatedAt remains unchanged
+
                 db.SaveChanges();
+                TempData["Success"] = "Category updated successfully.";
                 return RedirectToAction("Index");
             }
-            return View(category);
+
+            return View(input);
         }
 
         // GET: Categories/Delete/5
         public ActionResult Delete(int? id)
         {
-            if (id == null)
-            {
-                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            }
-            Category category = db.Categories.Find(id);
-            if (category == null)
-            {
-                return HttpNotFound();
-            }
+            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+
+            var category = db.Categories.Find(id);
+            if (category == null) return HttpNotFound();
+
             return View(category);
         }
 
@@ -109,9 +102,12 @@ namespace GradProject.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Category category = db.Categories.Find(id);
+            var category = db.Categories.Find(id);
+            if (category == null) return HttpNotFound();
+
             db.Categories.Remove(category);
             db.SaveChanges();
+            TempData["Success"] = "Category deleted successfully.";
             return RedirectToAction("Index");
         }
 
