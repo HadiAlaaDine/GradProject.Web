@@ -29,5 +29,9 @@ namespace GradProject.Web.Models
         {
             return new ApplicationDbContext();
         }
+
+        // هون أضفنا DbSet لـ Category
+        public DbSet<Category> Categories { get; set; }
+
     }
 }
