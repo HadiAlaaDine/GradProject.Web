@@ -15,9 +15,43 @@ namespace GradProject.Web.Controllers
         private readonly ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Products
-        public ActionResult Index()
+        // Filters: q (search), categoryId, minPrice, maxPrice
+        public ActionResult Index(string q, int? categoryId, decimal? minPrice, decimal? maxPrice)
         {
-            var products = db.Products.Include(p => p.Category);
+            var products = db.Products
+                             .Include(p => p.Category)
+                             .AsQueryable();
+
+            // فلترة نصّية على الاسم والوصف
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var term = q.Trim();
+                products = products.Where(p =>
+                    p.Name.Contains(term) ||
+                    (p.Description != null && p.Description.Contains(term)));
+            }
+
+            // فلترة حسب التصنيف
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                products = products.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            // فلترة حسب السعر
+            if (minPrice.HasValue) products = products.Where(p => p.Price >= minPrice.Value);
+            if (maxPrice.HasValue) products = products.Where(p => p.Price <= maxPrice.Value);
+
+            // ترتيب افتراضي
+            products = products.OrderBy(p => p.Name);
+
+            // DropDown التصنيفات
+            ViewBag.CategoryId = new SelectList(db.Categories.OrderBy(c => c.Name), "Id", "Name", categoryId);
+
+            // إعادة القيم الحالية للـ View لعرضها في الفورم
+            ViewBag.q = q;
+            ViewBag.minPrice = minPrice;
+            ViewBag.maxPrice = maxPrice;
+
             return View(products.ToList());
         }
 

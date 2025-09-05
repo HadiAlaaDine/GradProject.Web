@@ -2,46 +2,84 @@
 
 @{
     ViewBag.Title = "Products";
+    var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
 }
 
 <h2>Products</h2>
 
+<!-- Filter / Search (GET) -->
+@using (Html.BeginForm("Index", "Products", FormMethod.Get, new { @class = "row g-2 mb-3" }))
+{
+    <div class="col-sm-4">
+        <input type="text" name="q" value="@(ViewBag.q ?? "")" class="form-control" placeholder="Search name/description..." />
+    </div>
+    <div class="col-sm-3">
+        @Html.DropDownList(
+            "categoryId",
+            (SelectList)ViewBag.CategoryId,
+            "-- All Categories --",
+            new { @class = "form-control" }
+        )
+    </div>
+    <div class="col-sm-2">
+        <input type="number" step="0.01" min="0" name="minPrice"
+               value="@(ViewBag.minPrice ?? "")" class="form-control" placeholder="Min $" />
+    </div>
+    <div class="col-sm-2">
+        <input type="number" step="0.01" min="0" name="maxPrice"
+               value="@(ViewBag.maxPrice ?? "")" class="form-control" placeholder="Max $" />
+    </div>
+    <div class="col-sm-1 d-grid">
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
+}
+
 <p>
-    @Html.ActionLink("Create New Product", "Create", null, new { @class = "btn btn-primary mb-2" })
+    @Html.ActionLink("Create New Product", "Create", null, new { @class = "btn btn-success mb-2" })
+    @Html.ActionLink("Reset Filters", "Index", null, new { @class = "btn btn-outline-secondary mb-2 ms-1" })
 </p>
 
 <table class="table table-striped table-bordered table-hover">
     <thead class="table-light">
         <tr>
             <th>Category</th>
-            <th>@Html.DisplayNameFor(model => model.Name)</th>
-            <th>@Html.DisplayNameFor(model => model.Description)</th>
-            <th>@Html.DisplayNameFor(model => model.Price)</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price (USD)</th>
             <th>Created At</th>
             <th style="width:260px;">Actions</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Category?.Name</td>
+                    <td>@item.Name</td>
+                    <td>@item.Description</td>
+                    <td>@item.Price.ToString("C", usd)</td>
+                    <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        @Html.ActionLink("Edit", "Edit", new { id = item.Id }, new { @class = "btn btn-sm btn-warning" })
+                        @Html.ActionLink("Details", "Details", new { id = item.Id }, new { @class = "btn btn-sm btn-info mx-1" })
+                        @Html.ActionLink("Delete", "Delete", new { id = item.Id }, new { @class = "btn btn-sm btn-danger" })
+
+                        @using (Html.BeginForm("Add", "Cart", FormMethod.Post, new { @class = "d-inline" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.Hidden("productId", item.Id)
+                            <button type="submit" class="btn btn-sm btn-success mx-1">Add to Cart</button>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>@item.Category?.Name</td>
-                <td>@item.Name</td>
-                <td>@item.Description</td>
-                <td>@item.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
-                <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                <td>
-                    @Html.ActionLink("Edit", "Edit", new { id = item.Id }, new { @class = "btn btn-sm btn-warning" })
-                    @Html.ActionLink("Details", "Details", new { id = item.Id }, new { @class = "btn btn-sm btn-info mx-1" })
-                    @Html.ActionLink("Delete", "Delete", new { id = item.Id }, new { @class = "btn btn-sm btn-danger" })
-
-                    @using (Html.BeginForm("Add", "Cart", FormMethod.Post))
-                    {
-                        @Html.AntiForgeryToken()
-                        @Html.Hidden("productId", item.Id)
-                        <button type="submit" class="btn btn-sm btn-success mx-1">Add to Cart</button>
-                    }
-                </td>
+                <td colspan="6" class="text-center text-muted">No products match your filters.</td>
             </tr>
         }
     </tbody>
