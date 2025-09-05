@@ -198,6 +198,14 @@
     <Compile Include="Migrations\202509051147535_AddCartItem.Designer.cs">
       <DependentUpon>202509051147535_AddCartItem.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202509051445500_SyncSchema.cs" />
+    <Compile Include="Migrations\202509051445500_SyncSchema.Designer.cs">
+      <DependentUpon>202509051445500_SyncSchema.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202509051504208_UpdateCartItemCreatedAt.cs" />
+    <Compile Include="Migrations\202509051504208_UpdateCartItemCreatedAt.Designer.cs">
+      <DependentUpon>202509051504208_UpdateCartItemCreatedAt.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\CartItem.cs" />
@@ -340,6 +348,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202509051147535_AddCartItem.resx">
       <DependentUpon>202509051147535_AddCartItem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509051445500_SyncSchema.resx">
+      <DependentUpon>202509051445500_SyncSchema.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509051504208_UpdateCartItemCreatedAt.resx">
+      <DependentUpon>202509051504208_UpdateCartItemCreatedAt.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

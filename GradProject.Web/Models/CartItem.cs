@@ -24,5 +24,13 @@ namespace GradProject.Web.Models
 
         [Range(1, 1000)]
         public int Quantity { get; set; } = 1;
+
+        // ✅ تاريخ الإنشاء مع نوع datetime2 + قيمة افتراضية
+        [Column(TypeName = "datetime2")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // (اختياري) لو حابب تعرف آخر تعديل
+        [Column(TypeName = "datetime2")]
+        public DateTime? UpdatedAt { get; set; }
     }
 }

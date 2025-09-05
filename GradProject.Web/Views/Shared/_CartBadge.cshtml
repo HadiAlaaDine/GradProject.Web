@@ -1,16 +1,7 @@
-﻿@{
-    var count = (int)(ViewBag.Count ?? 0);
-}
-
-@if (Request.IsAuthenticated)
-{
-    <li class="nav-item">
-        @Html.ActionLink($"Cart ({count})", "Index", "Cart", new { area = "" }, new { @class = "nav-link" })
-    </li>
-}
-else
-{
-    <li class="nav-item">
-        @Html.ActionLink("Cart", "Index", "Cart", new { area = "" }, new { @class = "nav-link" })
-    </li>
-}
+﻿@{ var count = (int)(ViewBag.Count ?? 0); }
+<li class="nav-item">
+    <a class="nav-link" href="@Url.Action("Index","Cart")">
+        <span class="glyphicon glyphicon-shopping-cart"></span>
+        Cart <span class="badge bg-info">@count</span>
+    </a>
+</li>

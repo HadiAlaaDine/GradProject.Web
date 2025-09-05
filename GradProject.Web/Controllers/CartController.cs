@@ -10,77 +10,71 @@ using System.Data.Entity;
 
 namespace GradProject.Web.Controllers
 {
-    [Authorize] // السلة للمستخدمين المسجّلين فقط
+    [Authorize]
     public class CartController : Controller
     {
         private readonly ApplicationDbContext db = new ApplicationDbContext();
 
-        // (اختياري) Constructor صحيح بدون نوع إرجاع
-        public CartController()
-        {
-        }
-
-        // GET: /Cart
         public ActionResult Index()
         {
             var userId = User.Identity.GetUserId();
-            var items = db.CartItems
-                          .Include(c => c.Product)
-                          .Where(c => c.UserId == userId)
-                          .ToList();
-
-            ViewBag.Total = items.Sum(i => i.Product.Price * i.Quantity);
+            var items = db.CartItems.Include(c => c.Product)
+                                    .Where(c => c.UserId == userId)
+                                    .ToList();
             return View(items);
         }
 
-        // POST: /Cart/Add
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Add(int productId, int qty = 1)
+        public ActionResult Add(int productId, int quantity = 1)
         {
             var userId = User.Identity.GetUserId();
-            var product = db.Products.Find(productId);
-            if (product == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
 
-            var existing = db.CartItems.FirstOrDefault(c => c.UserId == userId && c.ProductId == productId);
-            if (existing == null)
-            {
-                db.CartItems.Add(new CartItem
-                {
-                    ProductId = productId,
-                    UserId = userId,
-                    Quantity = Math.Max(1, qty)
-                });
-            }
+            var item = db.CartItems.SingleOrDefault(c => c.UserId == userId && c.ProductId == productId);
+            if (item == null)
+                db.CartItems.Add(new CartItem { UserId = userId, ProductId = productId, Quantity = quantity });
             else
-            {
-                existing.Quantity += Math.Max(1, qty);
-            }
+                item.Quantity += quantity;
 
             db.SaveChanges();
             TempData["Success"] = "Added to cart.";
-            return RedirectToAction("Index");
+            return RedirectToAction("Index", "Products");
         }
 
-        // POST: /Cart/Update
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Update(int id, int qty)
+        // GET: /Cart/Increase/5
+        [Authorize]
+        public ActionResult Increase(int id)
         {
             var userId = User.Identity.GetUserId();
-            var item = db.CartItems.Include(c => c.Product)
-                                   .FirstOrDefault(c => c.Id == id && c.UserId == userId);
+            var item = db.CartItems.FirstOrDefault(c => c.Id == id && c.UserId == userId);
             if (item == null) return HttpNotFound();
 
-            item.Quantity = Math.Max(1, qty);
+            item.Quantity += 1;
             db.SaveChanges();
-            TempData["Success"] = "Cart updated.";
+            TempData["Success"] = "Quantity increased.";
             return RedirectToAction("Index");
         }
 
-        // POST: /Cart/Remove
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: /Cart/Decrease/5
+        [Authorize]
+        public ActionResult Decrease(int id)
+        {
+            var userId = User.Identity.GetUserId();
+            var item = db.CartItems.FirstOrDefault(c => c.Id == id && c.UserId == userId);
+            if (item == null) return HttpNotFound();
+
+            if (item.Quantity > 1)
+                item.Quantity -= 1;
+            else
+                db.CartItems.Remove(item);
+
+            db.SaveChanges();
+            TempData["Success"] = "Quantity updated.";
+            return RedirectToAction("Index");
+        }
+
+        // GET: /Cart/Remove/5
+        [Authorize]
         public ActionResult Remove(int id)
         {
             var userId = User.Identity.GetUserId();
@@ -93,45 +87,57 @@ namespace GradProject.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        // POST: /Cart/Clear
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: /Cart/Clear
+        [Authorize]
         public ActionResult Clear()
         {
             var userId = User.Identity.GetUserId();
-            var items = db.CartItems.Where(c => c.UserId == userId);
-            db.CartItems.RemoveRange(items);
-            db.SaveChanges();
-            TempData["Success"] = "Cart cleared.";
+            var items = db.CartItems.Where(c => c.UserId == userId).ToList();
+            if (items.Any())
+            {
+                db.CartItems.RemoveRange(items);
+                db.SaveChanges();
+                TempData["Success"] = "Cart cleared.";
+            }
             return RedirectToAction("Index");
         }
 
-        // يظهر عدّاد العناصر في السلة داخل الـ Navbar
-        [AllowAnonymous]
-        [ChildActionOnly]
+
+        // CartBadge موجودة فوق
+
+
+        // CartController
+        [ChildActionOnly] // مهم: يُستدعى كـ Partial فقط
         public PartialViewResult CartBadge()
         {
-            int count = 0;
-            if (Request.IsAuthenticated)
+            // لو مش عامل تسجيل دخول، رجّع 0 وما تعمل Redirect
+            if (!Request.IsAuthenticated)
             {
-                var userId = User.Identity.GetUserId();
-                // مجموع الكميات في السلة
-                count = db.CartItems.Where(c => c.UserId == userId)
-                                        .Select(c => (int?)c.Quantity)
-                                        .DefaultIfEmpty(0)
-                                        .Sum() ?? 0;
+                ViewBag.Count = 0;
+                return PartialView("_CartBadge");
             }
-            
+
+            var userId = User.Identity.GetUserId();
+            var count = db.CartItems
+                          .Where(c => c.UserId == userId)
+                          .Select(c => (int?)c.Quantity)
+                          .DefaultIfEmpty(0)
+                          .Sum() ?? 0;
+
             ViewBag.Count = count;
             return PartialView("_CartBadge");
         }
 
+
+
+
         protected override void Dispose(bool disposing)
         {
-            if (disposing) db.Dispose();
-            base.Dispose(disposing);
+                if (disposing)
+                {
+                    db.Dispose();
+                }
+                base.Dispose(disposing);
         }
-
-
     }
 }

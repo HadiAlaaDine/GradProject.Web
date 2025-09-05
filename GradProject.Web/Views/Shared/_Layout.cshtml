@@ -32,7 +32,22 @@
                     <li>@Html.ActionLink("Admin", "Index", "Admin", new { area = "" }, new { @class = "nav-link" })</li>
                     <li>@Html.ActionLink("Products", "Index", "Products", new { area = "" }, new { @class = "nav-link" })</li>
 
-                    @Html.Action("CartBadge", "Cart")  @* شريحة عدّاد السلة *@
+
+                    @* Cart badge in navbar *@
+                    @if (Request.IsAuthenticated)
+                    {
+                        @Html.Action("CartBadge", "Cart")
+                    }
+                    @*else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.Action("Index","Cart")">
+                                <span class="glyphicon glyphicon-shopping-cart"></span>
+                                Cart <span class="badge bg-secondary">0</span>
+                            </a>
+                        </li>
+                    }*@
+
                 </ul>
 
                 @Html.Partial("_LoginPartial")
