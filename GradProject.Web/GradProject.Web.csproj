@@ -210,12 +210,18 @@
     <Compile Include="Migrations\202509051542244_FixDateTimeTypes.Designer.cs">
       <DependentUpon>202509051542244_FixDateTimeTypes.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202509051735264_CreateOrders.cs" />
+    <Compile Include="Migrations\202509051735264_CreateOrders.Designer.cs">
+      <DependentUpon>202509051735264_CreateOrders.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\CartItem.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
+    <Compile Include="Models\Order.cs" />
+    <Compile Include="Models\OrderItem.cs" />
     <Compile Include="Models\Product.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
@@ -305,6 +311,7 @@
     <Content Include="Views\Cart\Index.cshtml" />
     <Content Include="Views\Shared\_CartBadge.cshtml" />
     <Content Include="Views\Shared\_Alerts.cshtml" />
+    <Content Include="Views\Cart\Checkout.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -361,6 +368,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202509051542244_FixDateTimeTypes.resx">
       <DependentUpon>202509051542244_FixDateTimeTypes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509051735264_CreateOrders.resx">
+      <DependentUpon>202509051735264_CreateOrders.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

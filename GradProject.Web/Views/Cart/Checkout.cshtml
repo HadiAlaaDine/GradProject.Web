@@ -1,0 +1,67 @@
+﻿@model IEnumerable<GradProject.Web.Models.CartItem>
+@using System.Globalization
+
+@{
+    ViewBag.Title = "Checkout";
+
+    // جهّز اللست لتتفادى تعدّد التعداد + احسب الإجمالي
+    var items = (Model ?? Enumerable.Empty<GradProject.Web.Models.CartItem>()).ToList();
+    var usd = CultureInfo.GetCultureInfo("en-US");
+    decimal total = items.Sum(ci => (ci.Product?.Price ?? 0m) * ci.Quantity);
+}
+
+<h2>Checkout</h2>
+<p class="text-muted">Review your order before confirming.</p>
+
+@if (!items.Any())
+{
+    <div class="alert alert-info">
+        Your cart is empty.
+        @Html.ActionLink("Back to Products", "Index", "Products", null, new { @class = "alert-link" })
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th class="text-end">Unit Price (USD)</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Subtotal (USD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int i = 1;
+            }
+            @foreach (var ci in items)
+            {
+                var price = ci.Product?.Price ?? 0m;
+                var subtotal = price * ci.Quantity;
+
+                <tr>
+                    <td>@(i++)</td>
+                    <td>@(ci.Product != null ? ci.Product.Name : "—")</td>
+                    <td class="text-end">@price.ToString("C", usd)</td>
+                    <td class="text-center">@ci.Quantity</td>
+                    <td class="text-end">@subtotal.ToString("C", usd)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4" class="text-end">Total</th>
+                <th class="text-end">@total.ToString("C", usd)</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    using (Html.BeginForm("ConfirmCheckout", "Cart", FormMethod.Post))
+    {
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-primary">Confirm Checkout</button>
+        @Html.ActionLink("Back to Cart", "Index", "Cart", null, new { @class = "btn btn-outline-secondary ms-2" })
+    }
+}

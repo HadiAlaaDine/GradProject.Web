@@ -36,6 +36,23 @@ namespace GradProject.Web.Models
         public DbSet<Product> Products { get; set; }
         // هون أضفنا DbSet لـ CartItem
         public DbSet<CartItem> CartItems { get; set; }
+        // هون أضفنا DbSet لـ Order
+        public DbSet<Order> Orders { get; set; }
+        // هون أضفنا DbSet لـ OrderItem
+        public DbSet<OrderItem> OrderItems { get; set; }
+
+        // هون أضفنا ال OnModelCreating
+        protected override void OnModelCreating(System.Data.Entity.DbModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // منع حذف عناصر الطلب عند حذف المنتج
+            modelBuilder.Entity<OrderItem>()
+                .HasRequired(oi => oi.Product)
+                .WithMany()
+                .HasForeignKey(oi => oi.ProductId)
+                .WillCascadeOnDelete(false);
+        }
 
     }
 }

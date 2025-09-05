@@ -129,6 +129,97 @@ namespace GradProject.Web.Controllers
         }
 
 
+        [Authorize]
+        public ActionResult Checkout()
+        {
+            var userId = User.Identity.GetUserId();
+
+            // جلب عناصر السلة مع المنتج المرتبط
+            var items = db.CartItems
+                          .Include(c => c.Product)
+                          .Where(c => c.UserId == userId)
+                          .ToList();
+
+            // إذا السلة فارغة
+            if (!items.Any())
+            {
+                TempData["Error"] = "Your cart is empty.";
+                return RedirectToAction("Index", "Cart");
+            }
+
+            // عرض صفحة الـ Checkout
+            return View(items);
+        }
+
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ConfirmCheckout()
+        {
+            var userId = User.Identity.GetUserId();
+
+            // جيب عناصر السلة مع المنتج
+            var cartItems = db.CartItems
+                              .Include(c => c.Product)
+                              .Where(c => c.UserId == userId)
+                              .ToList();
+
+            if (cartItems.Count == 0)
+            {
+                TempData["Error"] = "Your cart is empty.";
+                return RedirectToAction("Index", "Cart");
+            }
+
+            using (var tx = db.Database.BeginTransaction())
+            {
+                try
+                {
+                    var order = new Order
+                    {
+                        UserId = userId,
+                        CreatedAt = DateTime.UtcNow,
+                        Items = new List<OrderItem>()   // تأكد إنها مهيّأة
+                    };
+
+                    decimal total = 0m;
+
+                    foreach (var ci in cartItems)
+                    {
+                        var unitPrice = ci.Product?.Price ?? 0m; // snapshot للسعر
+
+                        order.Items.Add(new OrderItem
+                        {
+                            ProductId = ci.ProductId,
+                            Quantity = ci.Quantity,
+                            UnitPrice = unitPrice
+                        });
+
+                        total += unitPrice * ci.Quantity;
+                    }
+
+                    order.Total = total;
+
+                    db.Orders.Add(order);
+                    db.CartItems.RemoveRange(cartItems); // فضّي السلة
+                    db.SaveChanges();
+
+                    tx.Commit();
+
+                    TempData["Success"] = $"Order #{order.Id} created successfully.";
+                    return RedirectToAction("Index", "Cart");
+                    // لاحقاً لما نعمل OrdersController:
+                    // return RedirectToAction("Details", "Orders", new { id = order.Id });
+                }
+                catch (Exception)
+                {
+                    tx.Rollback();
+                    TempData["Error"] = "Could not complete checkout. Please try again.";
+                    return RedirectToAction("Index", "Cart");
+                }
+            }
+        }
+
 
 
         protected override void Dispose(bool disposing)

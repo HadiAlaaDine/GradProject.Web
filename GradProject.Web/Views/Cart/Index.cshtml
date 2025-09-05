@@ -76,7 +76,8 @@ else
                     <th colspan="4" class="text-end">Total</th>
                     <th class="text-end">@usd(grandTotal)</th>
                     <th>
-                        @Html.ActionLink("Clear Cart", "Clear", "Cart", null, new { @class = "btn btn-sm btn-warning" })
+                        @Html.ActionLink("Clear Cart", "Clear", "Cart", null, new { @class = "btn btn-sm btn-warning me-2" })
+                        @Html.ActionLink("Checkout", "Checkout", "Cart", null, new { @class = "btn btn-sm btn-primary" })
                     </th>
                 </tr>
             </tfoot>
