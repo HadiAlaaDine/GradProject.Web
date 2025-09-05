@@ -18,6 +18,7 @@ namespace GradProject.Web.Controllers
         // GET: Orders
         // Filters: from,to,minTotal,maxTotal | mineOnly (Admins only)
         // Paging: page,pageSize
+        [Authorize] // كل المستخدمين لازم يكونوا مسجّلين
         public ActionResult Index(
             string from, string to,
             decimal? minTotal, decimal? maxTotal,
@@ -92,15 +93,21 @@ namespace GradProject.Web.Controllers
 
 
         // GET: /Orders/Details/5
+        [Authorize]
+        [HttpGet]
         public ActionResult Details(int id)
         {
             var userId = User.Identity.GetUserId();
+            var isAdmin = User.IsInRole("Admin");
 
             var order = db.Orders
                           .Include(o => o.Items.Select(i => i.Product))
                           .FirstOrDefault(o => o.Id == id && o.UserId == userId);
 
             if (order == null) return HttpNotFound();
+
+            if (!isAdmin && order.UserId != userId)
+                return new HttpUnauthorizedResult();
 
             return View(order);
         }

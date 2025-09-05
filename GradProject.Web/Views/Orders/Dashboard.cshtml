@@ -26,25 +26,28 @@
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th class="text-end">Total</th>
+            <th style="width:120px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var o in Model.RecentOrders)
+        {
             <tr>
-                <th>#</th>
-                <th>Date</th>
-                <th class="text-end">Total</th>
+                <td>@o.Id</td>
+                <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td class="text-end">@o.Total.ToString("C", usd)</td>
+                <td>@Html.ActionLink("Details", "Details", "Orders", new { id = o.Id }, new { @class = "btn btn-sm btn-primary" })</td>
             </tr>
-        </thead>
-        <tbody>
-            @foreach (var o in Model.RecentOrders)
-            {
-                <tr>
-                    <td>@o.Id</td>
-                    <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td class="text-end">@o.Total.ToString("C", usd)</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+        }
+    </tbody>
+
+</table>
 }
 
 <h3>Top Products</h3>
