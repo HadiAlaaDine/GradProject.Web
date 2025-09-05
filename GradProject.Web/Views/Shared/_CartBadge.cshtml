@@ -1,0 +1,16 @@
+﻿@{
+    var count = (int)(ViewBag.Count ?? 0);
+}
+
+@if (Request.IsAuthenticated)
+{
+    <li class="nav-item">
+        @Html.ActionLink($"Cart ({count})", "Index", "Cart", new { area = "" }, new { @class = "nav-link" })
+    </li>
+}
+else
+{
+    <li class="nav-item">
+        @Html.ActionLink("Cart", "Index", "Cart", new { area = "" }, new { @class = "nav-link" })
+    </li>
+}

@@ -106,10 +106,32 @@ namespace GradProject.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        // يظهر عدّاد العناصر في السلة داخل الـ Navbar
+        [AllowAnonymous]
+        [ChildActionOnly]
+        public PartialViewResult CartBadge()
+        {
+            int count = 0;
+            if (Request.IsAuthenticated)
+            {
+                var userId = User.Identity.GetUserId();
+                // مجموع الكميات في السلة
+                count = db.CartItems.Where(c => c.UserId == userId)
+                                        .Select(c => (int?)c.Quantity)
+                                        .DefaultIfEmpty(0)
+                                        .Sum() ?? 0;
+            }
+            
+            ViewBag.Count = count;
+            return PartialView("_CartBadge");
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing) db.Dispose();
             base.Dispose(disposing);
         }
+
+
     }
 }

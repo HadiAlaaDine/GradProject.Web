@@ -1,0 +1,22 @@
+﻿@functions{
+    string Css(string type)
+    {
+        switch (type)
+        {
+            case "Success": return "alert alert-success";
+            case "Error": return "alert alert-danger";
+            case "Warning": return "alert alert-warning";
+            default: return "alert alert-info";
+        }
+    }
+}
+
+@foreach (var key in new[] { "Success", "Error", "Warning", "Info" })
+{
+    if (TempData[key] != null)
+    {
+        <div class="@Css(key)" role="alert" style="margin-top:10px;">
+            @TempData[key]
+        </div>
+    }
+}
