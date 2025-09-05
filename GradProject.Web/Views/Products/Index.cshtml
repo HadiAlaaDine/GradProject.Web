@@ -56,7 +56,7 @@
             foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Category?.Name</td>
+                    <td>@(item.Category != null ? item.Category.Name : "")</td>
                     <td>@item.Name</td>
                     <td>@item.Description</td>
                     <td>@item.Price.ToString("C", usd)</td>
