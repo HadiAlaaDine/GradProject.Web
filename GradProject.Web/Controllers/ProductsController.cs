@@ -16,17 +16,20 @@ namespace GradProject.Web.Controllers
 
         // GET: Products
         // Filters: q (search), categoryId, minPrice, maxPrice
-        public ActionResult Index(string q, int? categoryId, decimal? minPrice, decimal? maxPrice)
+        public ActionResult Index(string q, int? categoryId, decimal? minPrice, decimal? maxPrice, int page = 1, int pageSize = 10)
         {
-            var products = db.Products
-                             .Include(p => p.Category)
-                             .AsQueryable();
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = db.Products
+                          .Include(p => p.Category)
+                          .AsQueryable();
 
             // فلترة نصّية على الاسم والوصف
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var term = q.Trim();
-                products = products.Where(p =>
+                query = query.Where(p =>
                     p.Name.Contains(term) ||
                     (p.Description != null && p.Description.Contains(term)));
             }
@@ -34,26 +37,37 @@ namespace GradProject.Web.Controllers
             // فلترة حسب التصنيف
             if (categoryId.HasValue && categoryId.Value > 0)
             {
-                products = products.Where(p => p.CategoryId == categoryId.Value);
+                query = query.Where(p => p.CategoryId == categoryId.Value);
             }
 
             // فلترة حسب السعر
-            if (minPrice.HasValue) products = products.Where(p => p.Price >= minPrice.Value);
-            if (maxPrice.HasValue) products = products.Where(p => p.Price <= maxPrice.Value);
+            if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice.Value);
+            if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
 
-            // ترتيب افتراضي
-            products = products.OrderBy(p => p.Name);
+            // ترتيب + إحصاء + تقطيع صفحات
+            query = query.OrderByDescending(p => p.CreatedAt);
 
-            // DropDown التصنيفات
-            ViewBag.CategoryId = new SelectList(db.Categories.OrderBy(c => c.Name), "Id", "Name", categoryId);
+            var totalCount = query.Count();
+            var items = query.Skip((page - 1) * pageSize)
+                             .Take(pageSize)
+                             .ToList();
 
-            // إعادة القيم الحالية للـ View لعرضها في الفورم
+            // تمرير قيم الفلاتر والـPager للـView
             ViewBag.q = q;
+            ViewBag.categoryId = categoryId;
             ViewBag.minPrice = minPrice;
             ViewBag.maxPrice = maxPrice;
 
-            return View(products.ToList());
+            ViewBag.Page = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalCount = totalCount;
+
+            // للقائمة المنسدلة للتصنيفات
+            ViewBag.CategoryId = new SelectList(db.Categories.OrderBy(c => c.Name), "Id", "Name", categoryId);
+
+            return View(items);
         }
+
 
         // GET: Products/Details/5
         public ActionResult Details(int? id)

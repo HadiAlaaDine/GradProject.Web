@@ -3,6 +3,17 @@
 @{
     ViewBag.Title = "Products";
     var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+
+    int page = ViewBag.Page ?? 1;
+    int pageSize = ViewBag.PageSize ?? 10;
+    int total = ViewBag.TotalCount ?? 0;
+    int totalPages = (int)System.Math.Ceiling(total / (double)pageSize);
+
+    // قيم الفلاتر الحالية (لنثبّتها بالروابط)
+    var q = ViewBag.q as string;
+    int? categoryId = ViewBag.categoryId as int?;
+    decimal? minPrice = ViewBag.minPrice as decimal?;
+    decimal? maxPrice = ViewBag.maxPrice as decimal?;
 }
 
 <h2>Products</h2>
@@ -11,7 +22,7 @@
 @using (Html.BeginForm("Index", "Products", FormMethod.Get, new { @class = "row g-2 mb-3" }))
 {
     <div class="col-sm-4">
-        <input type="text" name="q" value="@(ViewBag.q ?? "")" class="form-control" placeholder="Search name/description..." />
+        <input type="text" name="q" value="@(q ?? "")" class="form-control" placeholder="Search name/description..." />
     </div>
     <div class="col-sm-3">
         @Html.DropDownList(
@@ -23,11 +34,11 @@
     </div>
     <div class="col-sm-2">
         <input type="number" step="0.01" min="0" name="minPrice"
-               value="@(ViewBag.minPrice ?? "")" class="form-control" placeholder="Min $" />
+               value="@(minPrice?.ToString() ?? "")" class="form-control" placeholder="Min $" />
     </div>
     <div class="col-sm-2">
         <input type="number" step="0.01" min="0" name="maxPrice"
-               value="@(ViewBag.maxPrice ?? "")" class="form-control" placeholder="Max $" />
+               value="@(maxPrice?.ToString() ?? "")" class="form-control" placeholder="Max $" />
     </div>
     <div class="col-sm-1 d-grid">
         <button type="submit" class="btn btn-primary">Filter</button>
@@ -84,3 +95,51 @@
         }
     </tbody>
 </table>
+
+@if (totalPages > 1)
+{
+    <nav aria-label="Products pages">
+        <ul class="pagination">
+            @{
+                // دالة تبني رابط مع الإبقاء على الفلاتر
+                Func<int, string> pageUrl = p => Url.Action("Index", new
+                {
+                    page = p,
+                    pageSize = pageSize,
+                    q = q,
+                    categoryId = categoryId,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice
+                });
+
+                int prev = page - 1;
+                int next = page + 1;
+
+                // نافذة أرقام الصفحات حول الحالية
+                int start = System.Math.Max(1, page - 2);
+                int end = System.Math.Min(totalPages, page + 2);
+            }
+
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link" href="@pageUrl(1)">« First</a>
+            </li>
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link" href="@pageUrl(prev)">‹ Prev</a>
+            </li>
+
+            @for (int p = start; p <= end; p++)
+            {
+                <li class="page-item @(p == page ? "active" : "")">
+                    <a class="page-link" href="@pageUrl(p)">@p</a>
+                </li>
+            }
+
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link" href="@pageUrl(next)">Next ›</a>
+            </li>
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link" href="@pageUrl(totalPages)">Last »</a>
+            </li>
+        </ul>
+    </nav>
+}
