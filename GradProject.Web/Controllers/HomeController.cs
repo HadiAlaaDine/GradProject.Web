@@ -10,12 +10,6 @@ namespace GradProject.Web.Controllers
     {
         public ActionResult Index()
         {
-            // تنبيهات للتجربة فقط
-            TempData["Success"] = "✅ Success test message.";
-            TempData["Error"] = "❌ Error test message.";
-            TempData["Warning"] = "⚠️ Warning test message.";
-            TempData["Info"] = "ℹ️ Info test message.";
-
             return View();
         }
 
