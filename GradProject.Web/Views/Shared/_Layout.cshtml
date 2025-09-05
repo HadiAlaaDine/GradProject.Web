@@ -44,6 +44,10 @@
                         <li>@Html.ActionLink("My Orders", "Index", "Orders", null, new { @class = "nav-link" })</li>
                     }
 
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li>@Html.ActionLink("Orders Dashboard", "Dashboard", "Orders", null, new { @class = "nav-link" })</li>
+                    }
 
                 </ul>
 

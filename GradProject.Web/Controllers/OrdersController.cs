@@ -1,11 +1,12 @@
 ﻿using GradProject.Web.Models;
+using GradProject.Web.Models.ViewModels;
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using System.Data.Entity;
 
 namespace GradProject.Web.Controllers
 {
@@ -103,6 +104,45 @@ namespace GradProject.Web.Controllers
 
             return View(order);
         }
+
+        [Authorize(Roles = "Admin")]
+        public ActionResult Dashboard()
+        {
+            var orders = db.Orders
+                           .Include(o => o.Items.Select(i => i.Product))
+                           .ToList();
+
+            var model = new OrdersDashboardViewModel
+            {
+                TotalOrders = orders.Count,
+                TotalRevenue = orders.Sum(o => o.Total),
+                RecentOrders = orders
+                    .OrderByDescending(o => o.CreatedAt)
+                    .Take(5)
+                    .Select(o => new OrderRow
+                    {
+                        Id = o.Id,
+                        CreatedAt = o.CreatedAt,
+                        Total = o.Total
+                    }).ToList(),
+
+                // نحمي حالنا لو في Items قديمة ما فيها Product
+                TopProducts = orders
+                    .SelectMany(o => o.Items)
+                    .GroupBy(i => i.Product != null ? i.Product.Name : "(Unknown)")
+                    .Select(g => new TopProductRow
+                    {
+                        ProductName = g.Key,
+                        Quantity = g.Sum(i => i.Quantity)
+                    })
+                    .OrderByDescending(x => x.Quantity)
+                    .Take(5)
+                    .ToList()
+            };
+
+            return View(model);
+        }
+
 
         protected override void Dispose(bool disposing)
         {

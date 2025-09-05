@@ -1,0 +1,74 @@
+﻿@model GradProject.Web.Models.ViewModels.OrdersDashboardViewModel
+@{
+    ViewBag.Title = "Orders Dashboard";
+    var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+}
+
+<h2>Orders Dashboard</h2>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="alert alert-info">
+            <strong>Total Orders:</strong> @Model.TotalOrders
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="alert alert-success">
+            <strong>Total Revenue:</strong> @Model.TotalRevenue.ToString("C", usd)
+        </div>
+    </div>
+</div>
+
+<h3>Recent Orders</h3>
+@if (Model.RecentOrders == null || !Model.RecentOrders.Any())
+{
+    <div class="alert alert-warning">No recent orders found.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model.RecentOrders)
+            {
+                <tr>
+                    <td>@o.Id</td>
+                    <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-end">@o.Total.ToString("C", usd)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h3>Top Products</h3>
+@if (Model.TopProducts == null || !Model.TopProducts.Any())
+{
+    <div class="alert alert-warning">No best sellers yet.</div>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th class="text-center">Quantity Sold</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.TopProducts)
+            {
+                <tr>
+                    <td>@p.ProductName</td>
+                    <td class="text-center">@p.Quantity</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
