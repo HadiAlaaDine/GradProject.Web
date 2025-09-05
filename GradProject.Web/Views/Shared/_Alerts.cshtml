@@ -1,4 +1,4 @@
-﻿@functions{
+﻿@functions {
     string Css(string type)
     {
         switch (type)
@@ -6,7 +6,8 @@
             case "Success": return "alert alert-success";
             case "Error": return "alert alert-danger";
             case "Warning": return "alert alert-warning";
-            default: return "alert alert-info";
+            case "Info": return "alert alert-info";
+            default: return "alert alert-secondary";
         }
     }
 }

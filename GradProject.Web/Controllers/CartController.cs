@@ -14,161 +14,190 @@ namespace GradProject.Web.Controllers
     public class CartController : Controller
     {
         private readonly ApplicationDbContext db = new ApplicationDbContext();
+        private string CurrentUserId => User.Identity.GetUserId();
 
+        // GET: /Cart
         public ActionResult Index()
         {
-            var userId = User.Identity.GetUserId();
-            var items = db.CartItems.Include(c => c.Product)
-                                    .Where(c => c.UserId == userId)
-                                    .ToList();
+            var items = db.CartItems
+                          .Include(c => c.Product)
+                          .Where(c => c.UserId == CurrentUserId)
+                          .OrderBy(c => c.Id)
+                          .ToList();
             return View(items);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Add(int productId, int quantity = 1)
-        {
-            var userId = User.Identity.GetUserId();
-
-            var item = db.CartItems.SingleOrDefault(c => c.UserId == userId && c.ProductId == productId);
-            if (item == null)
-                db.CartItems.Add(new CartItem { UserId = userId, ProductId = productId, Quantity = quantity });
-            else
-                item.Quantity += quantity;
-
-            db.SaveChanges();
-            TempData["Success"] = "Added to cart.";
-            return RedirectToAction("Index", "Products");
-        }
-
-        // GET: /Cart/Increase/5
-        [Authorize]
-        public ActionResult Increase(int id)
-        {
-            var userId = User.Identity.GetUserId();
-            var item = db.CartItems.FirstOrDefault(c => c.Id == id && c.UserId == userId);
-            if (item == null) return HttpNotFound();
-
-            item.Quantity = Math.Min(item.Quantity + 1, 2000);
-            db.SaveChanges();
-            TempData["Success"] = "Quantity increased.";
-            return RedirectToAction("Index");
-        }
-
-        // GET: /Cart/Decrease/5
-        [Authorize]
-        public ActionResult Decrease(int id)
-        {
-            var userId = User.Identity.GetUserId();
-            var item = db.CartItems.FirstOrDefault(c => c.Id == id && c.UserId == userId);
-            if (item == null) return HttpNotFound();
-
-            if (item.Quantity > 1)
-                item.Quantity -= 1;
-            else
-                db.CartItems.Remove(item);
-
-            db.SaveChanges();
-            TempData["Success"] = "Quantity updated.";
-            return RedirectToAction("Index");
-        }
-
-        // GET: /Cart/Remove/5
-        [Authorize]
-        public ActionResult Remove(int id)
-        {
-            var userId = User.Identity.GetUserId();
-            var item = db.CartItems.FirstOrDefault(c => c.Id == id && c.UserId == userId);
-            if (item == null) return HttpNotFound();
-
-            db.CartItems.Remove(item);
-            db.SaveChanges();
-            TempData["Success"] = "Item removed.";
-            return RedirectToAction("Index");
-        }
-
-        // GET: /Cart/Clear
-        [Authorize]
-        public ActionResult Clear()
-        {
-            var userId = User.Identity.GetUserId();
-            var items = db.CartItems.Where(c => c.UserId == userId).ToList();
-            if (items.Any())
-            {
-                db.CartItems.RemoveRange(items);
-                db.SaveChanges();
-                TempData["Success"] = "Cart cleared.";
-            }
-            return RedirectToAction("Index");
-        }
-
-
-        // CartBadge موجودة فوق
-
-
-        // CartController
-        [ChildActionOnly] // مهم: يُستدعى كـ Partial فقط
+        // شارة السلة في الـ Navbar (Partial فقط)
+        [ChildActionOnly]
         public PartialViewResult CartBadge()
         {
-            // لو مش عامل تسجيل دخول، رجّع 0 وما تعمل Redirect
             if (!Request.IsAuthenticated)
             {
                 ViewBag.Count = 0;
                 return PartialView("_CartBadge");
             }
 
-            var userId = User.Identity.GetUserId();
-            var count = db.CartItems
-                          .Where(c => c.UserId == userId)
-                          .Select(c => (int?)c.Quantity)
-                          .DefaultIfEmpty(0)
-                          .Sum() ?? 0;
+            var qty = db.CartItems
+                        .Where(c => c.UserId == CurrentUserId)
+                        .Select(c => (int?)c.Quantity)
+                        .DefaultIfEmpty(0)
+                        .Sum() ?? 0;
 
-            ViewBag.Count = count;
+            ViewBag.Count = qty;
             return PartialView("_CartBadge");
         }
 
+        // POST: /Cart/Add
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Add(int productId)
+        {
+            var product = db.Products.Find(productId);
+            if (product == null)
+            {
+                TempData["Error"] = "Product not found.";
+                return RedirectToAction("Index", "Products");
+            }
 
-        [Authorize]
+            var item = db.CartItems.FirstOrDefault(c => c.UserId == CurrentUserId && c.ProductId == productId);
+            if (item == null)
+            {
+                db.CartItems.Add(new CartItem
+                {
+                    ProductId = productId,
+                    UserId = CurrentUserId,
+                    Quantity = 1,
+                    CreatedAt = DateTime.UtcNow
+                });
+                TempData["Success"] = $"Added \"{product.Name}\" to cart.";
+            }
+            else
+            {
+                if (item.Quantity >= 1000)
+                    TempData["Info"] = "Maximum quantity is 1000.";
+                else
+                {
+                    item.Quantity += 1;
+                    TempData["Success"] = $"Increased \"{product.Name}\" quantity.";
+                }
+            }
+
+            db.SaveChanges();
+            return RedirectToAction("Index", "Products");
+        }
+
+        // POST: /Cart/Increase
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Increase(int id)
+        {
+            var item = db.CartItems.Include(c => c.Product)
+                                   .FirstOrDefault(c => c.Id == id && c.UserId == CurrentUserId);
+            if (item == null)
+            {
+                TempData["Error"] = "Cart item not found.";
+                return RedirectToAction("Index");
+            }
+
+            if (item.Quantity >= 1000)
+                TempData["Info"] = "Maximum quantity is 1000.";
+            else
+                item.Quantity += 1;
+
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        // POST: /Cart/Decrease
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Decrease(int id)
+        {
+            var item = db.CartItems.Include(c => c.Product)
+                                   .FirstOrDefault(c => c.Id == id && c.UserId == CurrentUserId);
+            if (item == null)
+            {
+                TempData["Error"] = "Cart item not found.";
+                return RedirectToAction("Index");
+            }
+
+            if (item.Quantity <= 1)
+                TempData["Info"] = "Minimum quantity is 1.";
+            else
+                item.Quantity -= 1;
+
+            db.SaveChanges();
+            return RedirectToAction("Index");
+        }
+
+        // POST: /Cart/Remove
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Remove(int id)
+        {
+            var item = db.CartItems.FirstOrDefault(c => c.Id == id && c.UserId == CurrentUserId);
+            if (item == null)
+            {
+                TempData["Error"] = "Cart item not found.";
+                return RedirectToAction("Index");
+            }
+
+            db.CartItems.Remove(item);
+            db.SaveChanges();
+            TempData["Success"] = "Item removed from cart.";
+            return RedirectToAction("Index");
+        }
+
+        // POST: /Cart/Clear
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Clear()
+        {
+            var myItems = db.CartItems.Where(c => c.UserId == CurrentUserId).ToList();
+            if (myItems.Any())
+            {
+                db.CartItems.RemoveRange(myItems);
+                db.SaveChanges();
+                TempData["Success"] = "Cart cleared.";
+            }
+            else
+            {
+                TempData["Info"] = "Your cart is already empty.";
+            }
+            return RedirectToAction("Index");
+        }
+
+        // GET: /Cart/Checkout
         public ActionResult Checkout()
         {
-            var userId = User.Identity.GetUserId();
-
-            // جلب عناصر السلة مع المنتج المرتبط
             var items = db.CartItems
                           .Include(c => c.Product)
-                          .Where(c => c.UserId == userId)
+                          .Where(c => c.UserId == CurrentUserId)
                           .ToList();
 
-            // إذا السلة فارغة
             if (!items.Any())
             {
                 TempData["Error"] = "Your cart is empty.";
-                return RedirectToAction("Index", "Cart");
+                return RedirectToAction("Index");
             }
 
-            // عرض صفحة الـ Checkout
             return View(items);
         }
 
-
-        [Authorize]
+        // POST: /Cart/ConfirmCheckout
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult ConfirmCheckout()
         {
-            var userId = User.Identity.GetUserId();
-
-            // جيب عناصر السلة مع المنتج
             var cartItems = db.CartItems
                               .Include(c => c.Product)
-                              .Where(c => c.UserId == userId)
+                              .Where(c => c.UserId == CurrentUserId)
                               .ToList();
 
-            if (cartItems.Count == 0)
+            if (!cartItems.Any())
             {
                 TempData["Error"] = "Your cart is empty.";
-                return RedirectToAction("Index", "Cart");
+                return RedirectToAction("Index");
             }
 
             using (var tx = db.Database.BeginTransaction())
@@ -177,58 +206,46 @@ namespace GradProject.Web.Controllers
                 {
                     var order = new Order
                     {
-                        UserId = userId,
-                        CreatedAt = DateTime.UtcNow,
-                        Items = new List<OrderItem>()   // تأكد إنها مهيّأة
+                        UserId = CurrentUserId,
+                        CreatedAt = DateTime.UtcNow
                     };
 
                     decimal total = 0m;
-
                     foreach (var ci in cartItems)
                     {
-                        var unitPrice = ci.Product?.Price ?? 0m; // snapshot للسعر
-
+                        var price = ci.Product?.Price ?? 0m; // snapshot
                         order.Items.Add(new OrderItem
                         {
                             ProductId = ci.ProductId,
                             Quantity = ci.Quantity,
-                            UnitPrice = unitPrice
+                            UnitPrice = price
                         });
-
-                        total += unitPrice * ci.Quantity;
+                        total += price * ci.Quantity;
                     }
-
                     order.Total = total;
 
                     db.Orders.Add(order);
-                    db.CartItems.RemoveRange(cartItems); // فضّي السلة
+                    db.CartItems.RemoveRange(cartItems);
                     db.SaveChanges();
 
                     tx.Commit();
 
                     TempData["Success"] = $"Order #{order.Id} created successfully.";
                     return RedirectToAction("Details", "Orders", new { id = order.Id });
-                    // لاحقاً لما نعمل OrdersController:
-                    // return RedirectToAction("Details", "Orders", new { id = order.Id });
                 }
-                catch (Exception)
+                catch
                 {
                     tx.Rollback();
                     TempData["Error"] = "Could not complete checkout. Please try again.";
-                    return RedirectToAction("Index", "Cart");
+                    return RedirectToAction("Index");
                 }
             }
         }
 
-
-
         protected override void Dispose(bool disposing)
         {
-                if (disposing)
-                {
-                    db.Dispose();
-                }
-                base.Dispose(disposing);
+            if (disposing) db.Dispose();
+            base.Dispose(disposing);
         }
     }
 }
