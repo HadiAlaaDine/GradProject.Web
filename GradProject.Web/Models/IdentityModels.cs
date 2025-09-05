@@ -34,5 +34,8 @@ namespace GradProject.Web.Models
         public DbSet<Category> Categories { get; set; }
         // هون أضفنا DbSet لـ Product
         public DbSet<Product> Products { get; set; }
+        // هون أضفنا DbSet لـ CartItem
+        public DbSet<CartItem> CartItems { get; set; }
+
     }
 }

@@ -18,26 +18,31 @@
             <th>@Html.DisplayNameFor(model => model.Description)</th>
             <th>@Html.DisplayNameFor(model => model.Price)</th>
             <th>Created At</th>
-            <th style="width:180px;">Actions</th>
+            <th style="width:260px;">Actions</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var item in Model)
         {
             <tr>
-                <!-- مهم: الوصول المباشر للقيمة، ما نستخدم DisplayFor هون -->
-                <td>@(item.Category != null ? item.Category.Name : "")</td>
-                <td>@Html.DisplayFor(_ => item.Name)</td>
-                <td>@Html.DisplayFor(_ => item.Description)</td>
-                <td>@Html.DisplayFor(_ => item.Price)</td>
+                <td>@item.Category?.Name</td>
+                <td>@item.Name</td>
+                <td>@item.Description</td>
+                <td>@item.Price.ToString("0.00")</td>
                 <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                 <td>
                     @Html.ActionLink("Edit", "Edit", new { id = item.Id }, new { @class = "btn btn-sm btn-warning" })
                     @Html.ActionLink("Details", "Details", new { id = item.Id }, new { @class = "btn btn-sm btn-info mx-1" })
                     @Html.ActionLink("Delete", "Delete", new { id = item.Id }, new { @class = "btn btn-sm btn-danger" })
+
+                    @using (Html.BeginForm("Add", "Cart", FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+                        @Html.Hidden("productId", item.Id)
+                        <button type="submit" class="btn btn-sm btn-success mx-1">Add to Cart</button>
+                    }
                 </td>
             </tr>
-            //
         }
     </tbody>
 </table>

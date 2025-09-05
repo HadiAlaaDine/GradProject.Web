@@ -170,6 +170,7 @@
     <Compile Include="App_Start\Startup.Auth.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\AdminController.cs" />
+    <Compile Include="Controllers\CartController.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
@@ -193,8 +194,13 @@
     <Compile Include="Migrations\202509041643274_AddProduct.Designer.cs">
       <DependentUpon>202509041643274_AddProduct.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202509051147535_AddCartItem.cs" />
+    <Compile Include="Migrations\202509051147535_AddCartItem.Designer.cs">
+      <DependentUpon>202509051147535_AddCartItem.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\CartItem.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
@@ -284,6 +290,7 @@
     <Content Include="Views\Products\Details.cshtml" />
     <Content Include="Views\Products\Edit.cshtml" />
     <Content Include="Views\Products\Index.cshtml" />
+    <Content Include="Views\Cart\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -328,6 +335,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202509041643274_AddProduct.resx">
       <DependentUpon>202509041643274_AddProduct.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509051147535_AddCartItem.resx">
+      <DependentUpon>202509051147535_AddCartItem.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
