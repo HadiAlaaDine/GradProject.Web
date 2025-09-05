@@ -1,14 +1,68 @@
 ﻿@model IEnumerable<GradProject.Web.Models.Order>
+@using System.Globalization
+
 @{
-    ViewBag.Title = "My Orders";
-    var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+    ViewBag.Title = "Orders";
+    var usd = CultureInfo.GetCultureInfo("en-US");
+
+    int page = ViewBag.page ?? 1;
+    int pageSize = ViewBag.pageSize ?? 10;
+    int totalPages = ViewBag.totalPages ?? 1;
+    int totalCount = ViewBag.totalCount ?? 0;
+
+    string sort = (ViewBag.sort as string) ?? "date";
+    string dir = (ViewBag.dir as string) ?? "desc";
+    bool asc = dir == "asc";
+    bool myOnly = ViewBag.myOnly ?? true; // للمستخدم العادي true افتراضياً
+
+    string from = ViewBag.from as string;
+    string to = ViewBag.to as string;
+    var minTotal = ViewBag.minTotal;
 }
 
-<h2>My Orders</h2>
+<h2>Orders</h2>
+
+@using (Html.BeginForm("Index", "Orders", FormMethod.Get, new { @class = "row g-2 mb-3" }))
+{
+    <div class="col-md-3">
+        <input type="date" name="from" value="@from" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <input type="date" name="to" value="@to" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <input type="number" step="0.01" min="0" name="minTotal" value="@(minTotal ?? "")" class="form-control" placeholder="Min total $" />
+    </div>
+    <div class="col-md-2">
+        <select name="pageSize" class="form-control">
+            @{
+                var sizes = new[] { 5, 10, 20, 50 };
+                foreach (var s in sizes)
+                {
+                    <option value="@s" @(s == pageSize ? "selected" : "")>@s / page</option>
+                }
+            }
+        </select>
+    </div>
+    <div class="col-md-2 d-grid">
+        <button class="btn btn-primary" type="submit">Apply</button>
+    </div>
+
+    @* خيار “طلباتي فقط” يظهر للإدمن *@
+    if (User.IsInRole("Admin"))
+    {
+        <div class="col-12 mt-2">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" name="myOnly" value="true" @(myOnly ? "checked" : "") />
+                Show only my orders
+            </label>
+        </div>
+    }
+}
 
 @if (Model == null || !Model.Any())
 {
-    <div class="alert alert-info">You have no orders yet.</div>
+    <div class="alert alert-info">No orders found.</div>
 }
 else
 {
@@ -16,9 +70,44 @@ else
         <thead class="table-light">
             <tr>
                 <th>#</th>
-                <th>Created At</th>
-                <th class="text-end">Total (USD)</th>
-                <th style="width:120px;"></th>
+                <th>
+                    @Html.ActionLink(
+                        "Date",
+                        "Index",
+                        new
+                             {
+                            from = from,
+                                 to = to,
+                                 minTotal = minTotal,
+                            myOnly = myOnly,
+                            sort = "date",
+                            dir = (sort == "date" && !asc) ? "asc" : "desc",
+                            page = 1,
+                                 pageSize = pageSize
+                        }
+                    )
+                    @(sort == "date" ? (asc ? " ▲" : " ▼") : "")
+                </th>
+                <th class="text-end">
+                    @Html.ActionLink(
+                        "Total",
+                        "Index",
+                        new
+                             {
+                            from = from,
+                                 to = to,
+                                 minTotal = minTotal,
+                            myOnly = myOnly,
+                            sort = "total",
+                            dir = (sort == "total" && !asc) ? "asc" : "desc",
+                            page = 1,
+                                 pageSize = pageSize
+                        }
+                    )
+                    @(sort == "total" ? (asc ? " ▲" : " ▼") : "")
+                </th>
+                <th class="text-center">Items</th>
+                <th style="width:140px;">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -28,9 +117,36 @@ else
                     <td>@o.Id</td>
                     <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                     <td class="text-end">@o.Total.ToString("C", usd)</td>
-                    <td>@Html.ActionLink("Details", "Details", new { id = o.Id }, new { @class = "btn btn-sm btn-primary" })</td>
+                    <td class="text-center">@((o.Items != null) ? o.Items.Count : 0)</td>
+                    <td>@Html.ActionLink("Details", "Details", new { id = o.Id }, new { @class = "btn btn-sm btn-info" })</td>
                 </tr>
             }
         </tbody>
     </table>
+
+    <nav aria-label="Orders pages">
+        <ul class="pagination">
+            <li class="page-item @(page <= 1 ? "disabled" : "")">
+                @Html.ActionLink("« Prev", "Index",
+                    new { from = from, to = to, minTotal = minTotal, myOnly = myOnly, sort = sort, dir = dir, page = Math.Max(1, page - 1), pageSize = pageSize },
+                    new { @class = "page-link" })
+            </li>
+
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <li class="page-item @(p == page ? "active" : "")">
+                    @Html.ActionLink(p.ToString(), "Index",
+                        new { from = from, to = to, minTotal = minTotal, myOnly = myOnly, sort = sort, dir = dir, page = p, pageSize = pageSize },
+                        new { @class = "page-link" })
+                </li>
+            }
+
+            <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                @Html.ActionLink("Next »", "Index",
+                    new { from = from, to = to, minTotal = minTotal, myOnly = myOnly, sort = sort, dir = dir, page = Math.Min(totalPages, page + 1), pageSize = pageSize },
+                    new { @class = "page-link" })
+            </li>
+        </ul>
+        <div class="text-muted">Showing page @page of @totalPages — @totalCount orders</div>
+    </nav>
 }
