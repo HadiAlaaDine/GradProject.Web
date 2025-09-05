@@ -38,15 +38,12 @@
                     {
                         @Html.Action("CartBadge", "Cart")
                     }
-                    @*else
+
+                    @if (Request.IsAuthenticated)
                     {
-                        <li class="nav-item">
-                            <a class="nav-link" href="@Url.Action("Index","Cart")">
-                                <span class="glyphicon glyphicon-shopping-cart"></span>
-                                Cart <span class="badge bg-secondary">0</span>
-                            </a>
-                        </li>
-                    }*@
+                        <li>@Html.ActionLink("My Orders", "Index", "Orders", null, new { @class = "nav-link" })</li>
+                    }
+
 
                 </ul>
 

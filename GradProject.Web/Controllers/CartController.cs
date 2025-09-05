@@ -207,7 +207,7 @@ namespace GradProject.Web.Controllers
                     tx.Commit();
 
                     TempData["Success"] = $"Order #{order.Id} created successfully.";
-                    return RedirectToAction("Index", "Cart");
+                    return RedirectToAction("Details", "Orders", new { id = order.Id });
                     // لاحقاً لما نعمل OrdersController:
                     // return RedirectToAction("Details", "Orders", new { id = order.Id });
                 }

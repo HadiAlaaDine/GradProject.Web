@@ -1,0 +1,53 @@
+﻿@model GradProject.Web.Models.Order
+@{
+    ViewBag.Title = "Order #" + Model.Id;
+    var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+    decimal total = Model.Items?.Sum(it => it.UnitPrice * it.Quantity) ?? 0m;
+}
+
+<h2>Order #@Model.Id</h2>
+<p class="text-muted">Created: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</p>
+
+@if (Model.Items == null || !Model.Items.Any())
+{
+    <div class="alert alert-info">No items in this order.</div>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th style="width:60px">#</th>
+                <th>Product</th>
+                <th class="text-end">Unit Price (USD)</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Subtotal (USD)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var i = 1;
+            }
+            @foreach (var it in Model.Items)
+            {
+                var name = it.Product != null ? it.Product.Name : "(deleted product)";
+                var sub = it.UnitPrice * it.Quantity;
+                <tr>
+                    <td>@(i++)</td>
+                    <td>@name</td>
+                    <td class="text-end">@it.UnitPrice.ToString("C", usd)</td>
+                    <td class="text-center">@it.Quantity</td>
+                    <td class="text-end">@sub.ToString("C", usd)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4" class="text-end">Total</th>
+                <th class="text-end">@total.ToString("C", usd)</th>
+            </tr>
+        </tfoot>
+    </table>
+}
+
+@Html.ActionLink("Back to Orders", "Index", "Orders", null, new { @class = "btn btn-outline-secondary" })
