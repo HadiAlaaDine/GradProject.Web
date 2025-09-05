@@ -11,10 +11,10 @@ namespace GradProject.Web.Models
     {
             public int Id { get; set; }
 
-            [Required, StringLength(150)]
+            [Required, StringLength(200)]
             public string Name { get; set; }
 
-            [StringLength(500)]
+            [StringLength(1000)]
             public string Description { get; set; }
 
             [Range(0, 1_000_000)]

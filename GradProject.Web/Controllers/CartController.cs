@@ -49,7 +49,7 @@ namespace GradProject.Web.Controllers
             var item = db.CartItems.FirstOrDefault(c => c.Id == id && c.UserId == userId);
             if (item == null) return HttpNotFound();
 
-            item.Quantity += 1;
+            item.Quantity = Math.Min(item.Quantity + 1, 2000);
             db.SaveChanges();
             TempData["Success"] = "Quantity increased.";
             return RedirectToAction("Index");

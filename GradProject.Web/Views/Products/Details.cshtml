@@ -20,7 +20,7 @@
         <dd>@Model.Description</dd>
 
         <dt>@Html.DisplayNameFor(m => m.Price)</dt>
-        <dd>@Model.Price.ToString("0.00")</dd>
+        <dd>@Model.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</dd>
 
         <dt>@Html.DisplayNameFor(m => m.CreatedAt)</dt>
         <dd>@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>

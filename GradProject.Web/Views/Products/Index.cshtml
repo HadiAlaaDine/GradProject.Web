@@ -28,7 +28,7 @@
                 <td>@item.Category?.Name</td>
                 <td>@item.Name</td>
                 <td>@item.Description</td>
-                <td>@item.Price.ToString("0.00")</td>
+                <td>@item.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
                 <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                 <td>
                     @Html.ActionLink("Edit", "Edit", new { id = item.Id }, new { @class = "btn btn-sm btn-warning" })

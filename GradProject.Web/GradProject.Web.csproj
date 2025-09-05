@@ -206,6 +206,10 @@
     <Compile Include="Migrations\202509051504208_UpdateCartItemCreatedAt.Designer.cs">
       <DependentUpon>202509051504208_UpdateCartItemCreatedAt.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202509051542244_FixDateTimeTypes.cs" />
+    <Compile Include="Migrations\202509051542244_FixDateTimeTypes.Designer.cs">
+      <DependentUpon>202509051542244_FixDateTimeTypes.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\CartItem.cs" />
@@ -354,6 +358,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202509051504208_UpdateCartItemCreatedAt.resx">
       <DependentUpon>202509051504208_UpdateCartItemCreatedAt.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509051542244_FixDateTimeTypes.resx">
+      <DependentUpon>202509051542244_FixDateTimeTypes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
