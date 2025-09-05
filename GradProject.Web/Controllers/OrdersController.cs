@@ -15,44 +15,53 @@ namespace GradProject.Web.Controllers
         private readonly ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Orders
-        // Filters: from,to,minTotal,myOnly  |  Sort: date/total  |  dir: asc/desc  |  Pagination: page,pageSize
+        // Filters: from,to,minTotal,maxTotal | mineOnly (Admins only)
+        // Paging: page,pageSize
         public ActionResult Index(
-            DateTime? from, DateTime? to, decimal? minTotal,
-            string sort = "date", string dir = "desc",
-            int page = 1, int pageSize = 10, bool? myOnly = null)
+            string from, string to,
+            decimal? minTotal, decimal? maxTotal,
+            bool? mineOnly,
+            int page = 1, int pageSize = 10)
         {
-            var isAdmin = User.IsInRole("Admin");
+            var q = db.Orders.AsQueryable();
+
             var userId = User.Identity.GetUserId();
+            bool isAdmin = User.IsInRole("Admin");
 
-            var q = db.Orders
-                      .Include(o => o.Items)
-                      .AsQueryable();
-
-            // أمان: المستخدم العادي بيشوف بس طلباته
-            // Admin بيشوف الكل إلا إذا طلب "myOnly=true"
-            if (!isAdmin || (myOnly ?? false))
-                q = q.Where(o => o.UserId == userId);
-
-            // فلاتر المدة الزمنية
-            if (from.HasValue) q = q.Where(o => DbFunctions.TruncateTime(o.CreatedAt) >= DbFunctions.TruncateTime(from.Value));
-            if (to.HasValue) q = q.Where(o => DbFunctions.TruncateTime(o.CreatedAt) <= DbFunctions.TruncateTime(to.Value));
-
-            // فلتر حسب الحد الأدنى للمبلغ
-            if (minTotal.HasValue) q = q.Where(o => o.Total >= minTotal.Value);
-
-            // ترتيب
-            bool asc = (dir ?? "desc").ToLower() == "asc";
-            switch ((sort ?? "date").ToLower())
+            // غير الأدمن يرى طلباته فقط
+            if (!isAdmin)
             {
-                case "total":
-                    q = asc ? q.OrderBy(o => o.Total) : q.OrderByDescending(o => o.Total);
-                    break;
-                default: // date
-                    q = asc ? q.OrderBy(o => o.CreatedAt) : q.OrderByDescending(o => o.CreatedAt);
-                    break;
+                q = q.Where(o => o.UserId == userId);
+                mineOnly = true; // للعرض في الفورم فقط
+            }
+            else if (mineOnly == true)
+            {
+                // إن كان Admin وفعّل "mineOnly"
+                q = q.Where(o => o.UserId == userId);
             }
 
-            // Pagination
+            // فلترة بالتواريخ (من عناصر input type="date")
+            DateTime dt;
+            if (!string.IsNullOrWhiteSpace(from) && DateTime.TryParse(from, out dt))
+            {
+                var fromDate = dt.Date;                  // بداية اليوم
+                q = q.Where(o => o.CreatedAt >= fromDate);
+            }
+
+            if (!string.IsNullOrWhiteSpace(to) && DateTime.TryParse(to, out dt))
+            {
+                var toExclusive = dt.Date.AddDays(1);    // أول لحظة من اليوم التالي (حد علوي حصري)
+                q = q.Where(o => o.CreatedAt < toExclusive);
+            }
+
+            // فلترة بالمبلغ
+            if (minTotal.HasValue) q = q.Where(o => o.Total >= minTotal.Value);
+            if (maxTotal.HasValue) q = q.Where(o => o.Total <= maxTotal.Value);
+
+            // ترتيب افتراضي بالأحدث
+            q = q.OrderByDescending(o => o.CreatedAt);
+
+            // ترقيم صفحات
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
 
@@ -60,24 +69,26 @@ namespace GradProject.Web.Controllers
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             if (page > totalPages && totalPages > 0) page = totalPages;
 
-            var data = q.Skip((page - 1) * pageSize)
-                        .Take(pageSize)
-                        .ToList();
+            var items = q
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
-            // تمرير معلومات للـ View
-            ViewBag.from = from?.ToString("yyyy-MM-dd");
-            ViewBag.to = to?.ToString("yyyy-MM-dd");
+            // قيم إلى الـ View
+            ViewBag.from = from;
+            ViewBag.to = to;
             ViewBag.minTotal = minTotal;
-            ViewBag.sort = sort;
-            ViewBag.dir = asc ? "asc" : "desc";
+            ViewBag.maxTotal = maxTotal;
+            ViewBag.mineOnly = mineOnly ?? false;
+
             ViewBag.page = page;
             ViewBag.pageSize = pageSize;
             ViewBag.totalCount = totalCount;
             ViewBag.totalPages = totalPages;
-            ViewBag.myOnly = myOnly ?? !isAdmin; // الافتراضي: العادي يشوف طلباته فقط
 
-            return View(data);
+            return View(items);
         }
+
 
         // GET: /Orders/Details/5
         public ActionResult Details(int id)
