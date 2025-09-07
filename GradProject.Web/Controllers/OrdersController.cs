@@ -144,8 +144,13 @@ namespace GradProject.Web.Controllers
 
             var model = new OrdersDashboardViewModel
             {
+                // العدد الكلي للطلبات
                 TotalOrders = orders.Count,
+
+                // مجموع الإيرادات
                 TotalRevenue = orders.Sum(o => o.Total),
+
+                // آخر 5 طلبات
                 RecentOrders = orders
                     .OrderByDescending(o => o.CreatedAt)
                     .Take(5)
@@ -154,9 +159,10 @@ namespace GradProject.Web.Controllers
                         Id = o.Id,
                         CreatedAt = o.CreatedAt,
                         Total = o.Total
-                    }).ToList(),
+                    })
+                    .ToList(),
 
-                // نحمي حالنا لو في Items قديمة ما فيها Product
+                // أكثر 5 منتجات مبيعاً (لو المنتج null منسميه Unknown)
                 TopProducts = orders
                     .SelectMany(o => o.Items)
                     .GroupBy(i => i.Product != null ? i.Product.Name : "(Unknown)")
@@ -172,6 +178,7 @@ namespace GradProject.Web.Controllers
 
             return View(model);
         }
+
 
         [Authorize(Roles = "Admin")]
         [HttpPost]

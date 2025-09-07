@@ -8,12 +8,12 @@
 
 <div class="row mb-4">
     <div class="col-md-6">
-        <div class="alert alert-info">
+        <div class="alert alert-info mb-2">
             <strong>Total Orders:</strong> @Model.TotalOrders
         </div>
     </div>
     <div class="col-md-6">
-        <div class="alert alert-success">
+        <div class="alert alert-success mb-2">
             <strong>Total Revenue:</strong> @Model.TotalRevenue.ToString("C", usd)
         </div>
     </div>
@@ -26,28 +26,33 @@
 }
 else
 {
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th class="text-end">Total</th>
-            <th style="width:120px;">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var o in Model.RecentOrders)
-        {
-            <tr>
-                <td>@o.Id</td>
-                <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                <td class="text-end">@o.Total.ToString("C", usd)</td>
-                <td>@Html.ActionLink("Details", "Details", "Orders", new { id = o.Id }, new { @class = "btn btn-sm btn-primary" })</td>
-            </tr>
-        }
-    </tbody>
-
-</table>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th class="text-end">Total</th>
+                    <th style="width:120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model.RecentOrders)
+                {
+                    <tr>
+                        <td>@o.Id</td>
+                        <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="text-end">@o.Total.ToString("C", usd)</td>
+                        <td>
+                            @Html.ActionLink("Details", "Details", "Orders",
+                                new { id = o.Id },
+                                new { @class = "btn btn-sm btn-primary" })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 <h3>Top Products</h3>
@@ -57,21 +62,23 @@ else
 }
 else
 {
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th class="text-center">Quantity Sold</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var p in Model.TopProducts)
-            {
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
                 <tr>
-                    <td>@p.ProductName</td>
-                    <td class="text-center">@p.Quantity</td>
+                    <th>Product</th>
+                    <th class="text-center">Quantity Sold</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.TopProducts)
+                {
+                    <tr>
+                        <td>@p.ProductName</td>
+                        <td class="text-center">@p.Quantity</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
