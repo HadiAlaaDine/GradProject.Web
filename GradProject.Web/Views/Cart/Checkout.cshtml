@@ -1,83 +1,129 @@
-﻿@model IEnumerable<GradProject.Web.Models.CartItem>
+﻿@model GradProject.Web.Controllers.CartController.CheckoutViewModel
 @using System.Globalization
 
 @{
     ViewBag.Title = "Checkout";
-
-    var items = (Model ?? Enumerable.Empty<GradProject.Web.Models.CartItem>()).ToList();
     var usd = CultureInfo.GetCultureInfo("en-US");
+    var items = (Model.Items ?? new List<GradProject.Web.Models.CartItem>());
     decimal total = items.Sum(ci => (ci.Product?.Price ?? 0m) * ci.Quantity);
 }
 
 <h2>Checkout</h2>
-<p class="text-muted">Review your order and choose payment method.</p>
+<p class="text-muted">Review your order, enter shipping info, and choose payment method.</p>
 
-@if (!items.Any())
+@using (Html.BeginForm("ConfirmCheckout", "Cart", FormMethod.Post, new { @class = "row" }))
 {
-    <div class="alert alert-info">
-        Your cart is empty.
-        @Html.ActionLink("Back to Products", "Index", "Products", null, new { @class = "alert-link" })
-    </div>
-}
-else
-{
-    using (Html.BeginForm("ConfirmCheckout", "Cart", FormMethod.Post))
-    {
-        @Html.AntiForgeryToken()
+    @Html.AntiForgeryToken()
 
-        <!-- Payment Method -->
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <!-- Left: Shipping Info -->
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header">Shipping Information</div>
+            <div class="card-body">
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipFullName, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipFullName, new { @class = "form-control", placeholder = "Full name" })
+                    @Html.ValidationMessageFor(m => m.ShipFullName, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipAddress1, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipAddress1, new { @class = "form-control", placeholder = "Address line 1" })
+                    @Html.ValidationMessageFor(m => m.ShipAddress1, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipAddress2, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipAddress2, new { @class = "form-control", placeholder = "Address line 2 (optional)" })
+                    @Html.ValidationMessageFor(m => m.ShipAddress2, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-6 mb-3">
+                        @Html.LabelFor(m => m.ShipCity, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.ShipCity, new { @class = "form-control", placeholder = "City" })
+                        @Html.ValidationMessageFor(m => m.ShipCity, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        @Html.LabelFor(m => m.ShipCountry, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.ShipCountry, new { @class = "form-control", placeholder = "Country" })
+                        @Html.ValidationMessageFor(m => m.ShipCountry, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipPhone, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipPhone, new { @class = "form-control", placeholder = "Phone (optional)" })
+                    @Html.ValidationMessageFor(m => m.ShipPhone, "", new { @class = "text-danger" })
+                </div>
+
+            </div>
+        </div>
+
         <div class="card mb-3">
             <div class="card-header">Payment Method</div>
             <div class="card-body">
                 <div class="form-check">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="pmCOD" value="COD" checked />
+                    @Html.RadioButtonFor(m => m.PaymentMethod, "COD", new { @class = "form-check-input", id = "pmCOD" })
                     <label class="form-check-label" for="pmCOD">Cash on Delivery (COD)</label>
                 </div>
                 <div class="form-check mt-2">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="pmOnline" value="Online" />
+                    @Html.RadioButtonFor(m => m.PaymentMethod, "ONLINE", new { @class = "form-check-input", id = "pmOnline" })
                     <label class="form-check-label" for="pmOnline">Online Payment (Simulation)</label>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Order Summary -->
-        <table class="table table-bordered table-striped">
-            <thead class="table-light">
-                <tr>
-                    <th>#</th>
-                    <th>Product</th>
-                    <th class="text-end">Unit Price (USD)</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-end">Subtotal (USD)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @{
-                    int i = 1;
-                }
-                @foreach (var ci in items)
-                {
-                    var price = ci.Product?.Price ?? 0m;
-                    var subtotal = price * ci.Quantity;
-
+    <!-- Right: Order Summary -->
+    <div class="col-md-6">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
                     <tr>
-                        <td>@(i++)</td>
-                        <td>@(ci.Product != null ? ci.Product.Name : "—")</td>
-                        <td class="text-end">@price.ToString("C", usd)</td>
-                        <td class="text-center">@ci.Quantity</td>
-                        <td class="text-end">@subtotal.ToString("C", usd)</td>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th class="text-end">Unit Price (USD)</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-end">Subtotal (USD)</th>
                     </tr>
-                }
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="4" class="text-end">Total</th>
-                    <th class="text-end">@total.ToString("C", usd)</th>
-                </tr>
-            </tfoot>
-        </table>
+                </thead>
+                <tbody>
+                    @{
+                        int i = 1;
+                    }
+                    @foreach (var ci in items)
+                    {
+                        var price = ci.Product?.Price ?? 0m;
+                        var subtotal = price * ci.Quantity;
+                        <tr>
+                            <td>@(i++)</td>
+                            <td>@(ci.Product != null ? ci.Product.Name : "—")</td>
+                            <td class="text-end">@price.ToString("C", usd)</td>
+                            <td class="text-center">@ci.Quantity</td>
+                            <td class="text-end">@subtotal.ToString("C", usd)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-end">Total</th>
+                        <th class="text-end">@total.ToString("C", usd)</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
 
-        <button type="submit" class="btn btn-primary">Confirm Checkout</button>
-        @Html.ActionLink("Back to Cart", "Index", "Cart", null, new { @class = "btn btn-outline-secondary ms-2" })
-    }
+        <div class="mt-2">
+            <button type="submit" class="btn btn-primary">Confirm Checkout</button>
+            @Html.ActionLink("Back to Cart", "Index", "Cart", null, new { @class = "btn btn-outline-secondary ms-2" })
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
 }

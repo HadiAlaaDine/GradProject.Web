@@ -6,7 +6,7 @@
     var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
     decimal total = Model.Items?.Sum(it => it.UnitPrice * it.Quantity) ?? 0m;
 
-    // ✅ اسحب معلومات المتجر من Web.config (appSettings)
+    // اسحب معلومات المتجر من Web.config (appSettings)
     string shopName = ConfigurationManager.AppSettings["Shop.Name"] ?? "Grad Shop";
     string shopAddress = ConfigurationManager.AppSettings["Shop.Address"] ?? "Tripoli, Lebanon";
     string shopEmail = ConfigurationManager.AppSettings["Shop.Email"] ?? "support@gradshop.local";

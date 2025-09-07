@@ -35,13 +35,30 @@ namespace GradProject.Web.Models
         [DataType(DataType.Currency)]
         public decimal Total { get; set; }
 
-        // ✅ طريقة الدفع
+        // ✅ طريقة الدفع + حالة الطلب
         public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
-
-        // ✅ حالة الطلب
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
-        // ✅ Navigation
+        // ✅ معلومات الشحن / بيانات المستلم
+        [Required, StringLength(100)]
+        public string ShipFullName { get; set; }
+
+        [Required, StringLength(200)]
+        public string ShipAddress1 { get; set; }
+
+        [StringLength(200)]
+        public string ShipAddress2 { get; set; }
+
+        [Required, StringLength(100)]
+        public string ShipCity { get; set; }
+
+        [Required, StringLength(100)]
+        public string ShipCountry { get; set; }
+
+        [StringLength(30)]
+        public string ShipPhone { get; set; }
+
+        // Navigation
         public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }

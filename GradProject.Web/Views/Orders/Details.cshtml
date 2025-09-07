@@ -21,9 +21,29 @@
 
 <div class="mb-3">
     @Html.ActionLink("Back to Orders", "Index", "Orders", null, new { @class = "btn btn-outline-secondary me-2" })
-    @* زر تحميل الفاتورة PDF (Rotativa) *@
     @Html.ActionLink("Download Invoice (PDF)", "Invoice", "Orders", new { id = Model.Id }, new { @class = "btn btn-success btn-sm" })
 </div>
+
+@if (!string.IsNullOrWhiteSpace(Model.ShipFullName) ||
+    !string.IsNullOrWhiteSpace(Model.ShipAddress1) ||
+    !string.IsNullOrWhiteSpace(Model.ShipCity) ||
+    !string.IsNullOrWhiteSpace(Model.ShipCountry) ||
+    !string.IsNullOrWhiteSpace(Model.ShipPhone))
+{
+    <div class="card mb-3">
+        <div class="card-header">Shipping Information</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-sm-6 mb-2"><strong>Name:</strong> @(!string.IsNullOrWhiteSpace(Model.ShipFullName) ? Model.ShipFullName : "-")</div>
+                <div class="col-sm-6 mb-2"><strong>Phone:</strong> @(!string.IsNullOrWhiteSpace(Model.ShipPhone) ? Model.ShipPhone : "-")</div>
+                <div class="col-sm-12 mb-2"><strong>Address 1:</strong> @(!string.IsNullOrWhiteSpace(Model.ShipAddress1) ? Model.ShipAddress1 : "-")</div>
+                <div class="col-sm-12 mb-2"><strong>Address 2:</strong> @(!string.IsNullOrWhiteSpace(Model.ShipAddress2) ? Model.ShipAddress2 : "-")</div>
+                <div class="col-sm-6 mb-2"><strong>City:</strong> @(!string.IsNullOrWhiteSpace(Model.ShipCity) ? Model.ShipCity : "-")</div>
+                <div class="col-sm-6 mb-2"><strong>Country:</strong> @(!string.IsNullOrWhiteSpace(Model.ShipCountry) ? Model.ShipCountry : "-")</div>
+            </div>
+        </div>
+    </div>
+}
 
 @if (User.IsInRole("Admin"))
 {

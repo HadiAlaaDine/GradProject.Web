@@ -2,11 +2,12 @@
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Data.Entity;
 using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Mvc;
-using System.Data.Entity;
 
 namespace GradProject.Web.Controllers
 {
@@ -167,12 +168,44 @@ namespace GradProject.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        // ضع هذا الـViewModel داخل CartController (قبل الأفعال/الـactions أو في أعلى الملف)
+        public class CheckoutViewModel
+        {
+            // لعرض عناصر السلة
+            public List<CartItem> Items { get; set; } = new List<CartItem>();
+
+            // بيانات الشحن (مطلوبة)
+            [Required, StringLength(100)]
+            public string ShipFullName { get; set; }
+
+            [Required, StringLength(200)]
+            public string ShipAddress1 { get; set; }
+
+            [StringLength(200)]
+            public string ShipAddress2 { get; set; }
+
+            [Required, StringLength(100)]
+            public string ShipCity { get; set; }
+
+            [Required, StringLength(100)]
+            public string ShipCountry { get; set; }
+
+            [StringLength(30)]
+            public string ShipPhone { get; set; }
+
+            // طريقة الدفع من الفورم: "COD" أو "ONLINE"
+            public string PaymentMethod { get; set; } = "COD";
+        }
+
         // GET: /Cart/Checkout
+        [Authorize]
+        [HttpGet]
         public ActionResult Checkout()
         {
+            var userId = User.Identity.GetUserId();
             var items = db.CartItems
                           .Include(c => c.Product)
-                          .Where(c => c.UserId == CurrentUserId)
+                          .Where(c => c.UserId == userId)
                           .ToList();
 
             if (!items.Any())
@@ -181,30 +214,46 @@ namespace GradProject.Web.Controllers
                 return RedirectToAction("Index");
             }
 
-            return View(items);
+            // نعبّي نموذج افتراضي
+            var vm = new CheckoutViewModel
+            {
+                Items = items,
+                ShipFullName = User.Identity.Name,   // اختياري
+                ShipCountry = "Lebanon"              // اختياري
+            };
+
+            return View(vm);
         }
 
         // POST: /Cart/ConfirmCheckout
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ConfirmCheckout(string paymentMethod)
+        public ActionResult ConfirmCheckout(CheckoutViewModel vm)
         {
             var userId = User.Identity.GetUserId();
 
-            var cartItems = db.CartItems
-                              .Include(c => c.Product)
-                              .Where(c => c.UserId == userId)
-                              .ToList();
+            // نعيد جلب العناصر لعرضها لو فيه خطأ فالتحقق
+            vm.Items = db.CartItems
+                         .Include(c => c.Product)
+                         .Where(c => c.UserId == userId)
+                         .ToList();
 
-            if (!cartItems.Any())
+            if (!vm.Items.Any())
             {
                 TempData["Error"] = "Your cart is empty.";
                 return RedirectToAction("Index");
             }
 
-            // حوّل قيمة الفورم إلى enum آمن
-            var method = (paymentMethod ?? "COD").Equals("ONLINE", StringComparison.OrdinalIgnoreCase)
+            // تحقّق الموديل (لأن حقول الشحن Required)
+            if (!ModelState.IsValid)
+            {
+                // ارجِع لنفس صفحة الـCheckout مع رسائل التحقق
+                return View("Checkout", vm);
+            }
+
+            // حوّل طريقة الدفع إلى enum آمن
+            var method = (vm.PaymentMethod ?? "COD").Equals("ONLINE", StringComparison.OrdinalIgnoreCase)
                 ? GradProject.Web.Models.PaymentMethod.Online
                 : GradProject.Web.Models.PaymentMethod.CashOnDelivery;
 
@@ -217,12 +266,21 @@ namespace GradProject.Web.Controllers
                         UserId = userId,
                         CreatedAt = DateTime.UtcNow,
                         PaymentMethod = method,
-                        Items = new List<OrderItem>() // مهم
+
+                        // 🟢 حقول الشحن الجديدة
+                        ShipFullName = vm.ShipFullName?.Trim(),
+                        ShipAddress1 = vm.ShipAddress1?.Trim(),
+                        ShipAddress2 = vm.ShipAddress2?.Trim(),
+                        ShipCity = vm.ShipCity?.Trim(),
+                        ShipCountry = vm.ShipCountry?.Trim(),
+                        ShipPhone = vm.ShipPhone?.Trim(),
+
+                        Items = new List<OrderItem>()
                     };
 
                     decimal total = 0m;
 
-                    foreach (var ci in cartItems)
+                    foreach (var ci in vm.Items)
                     {
                         var unitPrice = ci.Product?.Price ?? 0m; // snapshot
                         order.Items.Add(new OrderItem
@@ -237,7 +295,7 @@ namespace GradProject.Web.Controllers
                     order.Total = total;
 
                     db.Orders.Add(order);
-                    db.CartItems.RemoveRange(cartItems); // تفريغ السلة
+                    db.CartItems.RemoveRange(vm.Items); // تفريغ السلة
                     db.SaveChanges();
 
                     tx.Commit();
@@ -253,6 +311,7 @@ namespace GradProject.Web.Controllers
                 }
             }
         }
+
 
 
 
