@@ -13,6 +13,15 @@ namespace GradProject.Web.Models
         Online = 1
     }
 
+    public enum OrderStatus
+    {
+        Pending = 0,
+        Processing = 1,
+        Shipped = 2,
+        Completed = 3,
+        Cancelled = 4
+    }
+
     public class Order
     {
         public int Id { get; set; }
@@ -28,6 +37,9 @@ namespace GradProject.Web.Models
 
         // ✅ طريقة الدفع
         public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
+
+        // ✅ حالة الطلب
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         // Navigation
         public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();

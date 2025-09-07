@@ -102,15 +102,18 @@ namespace GradProject.Web.Controllers
 
             var order = db.Orders
                           .Include(o => o.Items.Select(i => i.Product))
-                          .FirstOrDefault(o => o.Id == id && o.UserId == userId);
+                          .FirstOrDefault(o => o.Id == id);
 
-            if (order == null) return HttpNotFound();
+            if (order == null)
+                return HttpNotFound();
 
+            // السماح للإدمن يشوف الكل، والمستخدم العادي بس طلباته
             if (!isAdmin && order.UserId != userId)
                 return new HttpUnauthorizedResult();
 
             return View(order);
         }
+
 
         [Authorize(Roles = "Admin")]
         public ActionResult Dashboard()
@@ -150,6 +153,28 @@ namespace GradProject.Web.Controllers
             return View(model);
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UpdateStatus(int id, string status)
+        {
+            var order = db.Orders.Find(id);
+            if (order == null) return HttpNotFound();
+
+            // حاول تحوّل النصّ إلى enum بشكل آمن
+            OrderStatus newStatus;
+            if (!Enum.TryParse<OrderStatus>(status, true, out newStatus))
+            {
+                TempData["Error"] = "Invalid status value.";
+                return RedirectToAction("Details", new { id });
+            }
+
+            order.Status = newStatus;
+            db.SaveChanges();
+
+            TempData["Success"] = $"Order status updated to {order.Status}.";
+            return RedirectToAction("Details", new { id });
+        }
 
         protected override void Dispose(bool disposing)
         {

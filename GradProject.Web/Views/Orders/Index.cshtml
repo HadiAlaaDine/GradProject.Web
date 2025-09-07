@@ -15,6 +15,12 @@
     var minTotal = ViewBag.minTotal;
     var maxTotal = ViewBag.maxTotal;
     bool mineOnly = ViewBag.mineOnly ?? false;
+
+    Func<GradProject.Web.Models.OrderStatus, string> badge = s =>
+        s == GradProject.Web.Models.OrderStatus.Pending ? "badge bg-secondary" :
+        s == GradProject.Web.Models.OrderStatus.Processing ? "badge bg-info" :
+        s == GradProject.Web.Models.OrderStatus.Shipped ? "badge bg-primary" :
+        s == GradProject.Web.Models.OrderStatus.Completed ? "badge bg-success" : "badge bg-danger";
 }
 
 <h2>Orders</h2>
@@ -41,7 +47,7 @@
                value="@(maxTotal ?? "")" class="form-control" placeholder="Max total $" />
     </div>
 
-    @* خيار يظهر فقط للإدمن *@
+    @* يظهر فقط للإدمن *@
     if (User.IsInRole("Admin"))
     {
         <div class="col-md-2 d-flex align-items-center">
@@ -93,6 +99,7 @@ else
                     <th>Created At</th>
                     <th class="text-end">Total (USD)</th>
                     <th>Payment</th>
+                    <th>Status</th>
                     <th class="text-center">Items</th>
                     <th style="width:140px;">Actions</th>
                 </tr>
@@ -109,12 +116,10 @@ else
                         <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td class="text-end">@o.Total.ToString("C", usd)</td>
                         <td>@o.PaymentMethod</td>
+                        <td><span class="@badge(o.Status)">@o.Status</span></td>
                         <td class="text-center">@((o.Items != null) ? o.Items.Count : 0)</td>
                         <td>
-                            @Html.ActionLink(
-                                "Details", "Details", new { id = o.Id },
-                                new { @class = "btn btn-sm btn-info" }
-                            )
+                            @Html.ActionLink("Details", "Details", "Orders", new { id = o.Id }, new { @class = "btn btn-sm btn-info" })
                         </td>
                     </tr>
                 }
