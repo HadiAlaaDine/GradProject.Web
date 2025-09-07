@@ -41,7 +41,7 @@ namespace GradProject.Web.Models
         // ✅ حالة الطلب
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
-        // Navigation
+        // ✅ Navigation
         public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }

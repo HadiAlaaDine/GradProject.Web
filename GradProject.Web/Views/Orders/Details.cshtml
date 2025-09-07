@@ -12,11 +12,18 @@
 }
 
 <h2>Order #@Model.Id</h2>
+
 <p class="text-muted">
     Created: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")
     | Payment: <strong>@Model.PaymentMethod</strong>
     | Status: <span class="@badge(Model.Status)">@Model.Status</span>
 </p>
+
+<div class="mb-3">
+    @Html.ActionLink("Back to Orders", "Index", "Orders", null, new { @class = "btn btn-outline-secondary me-2" })
+    @* زر تحميل الفاتورة PDF (Rotativa) *@
+    @Html.ActionLink("Download Invoice (PDF)", "Invoice", "Orders", new { id = Model.Id }, new { @class = "btn btn-success btn-sm" })
+</div>
 
 @if (User.IsInRole("Admin"))
 {
@@ -79,5 +86,3 @@ else
         </tfoot>
     </table>
 }
-
-@Html.ActionLink("Back to Orders", "Index", "Orders", null, new { @class = "btn btn-outline-secondary" })

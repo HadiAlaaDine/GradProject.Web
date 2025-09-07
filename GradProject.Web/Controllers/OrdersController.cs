@@ -1,12 +1,16 @@
 ﻿using GradProject.Web.Models;
 using GradProject.Web.Models.ViewModels;
 using Microsoft.AspNet.Identity;
+using Rotativa;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using System.Xml.Linq;
 
 namespace GradProject.Web.Controllers
 {
@@ -174,6 +178,26 @@ namespace GradProject.Web.Controllers
 
             TempData["Success"] = $"Order status updated to {order.Status}.";
             return RedirectToAction("Details", new { id });
+        }
+
+        [Authorize]
+        public ActionResult Invoice(int id)
+        {
+            var userId = User.Identity.GetUserId();
+            var isAdmin = User.IsInRole("Admin");
+
+            var order = db.Orders
+                          .Include(o => o.Items.Select(i => i.Product))
+                          .FirstOrDefault(o => o.Id == id);
+
+            if (order == null) return HttpNotFound();
+            if (!isAdmin && order.UserId != userId) return new HttpUnauthorizedResult();
+
+            // Rotativa: حوّل View لملف PDF
+            return new ViewAsPdf("Invoice", order)
+            {
+                FileName = $"Invoice_Order_{order.Id}.pdf"
+            };
         }
 
         protected override void Dispose(bool disposing)

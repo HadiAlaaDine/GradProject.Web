@@ -1,0 +1,95 @@
+﻿@model GradProject.Web.Models.Order
+@{
+    Layout = null; // PDF نظيف بدون Layout
+    var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
+    decimal total = Model.Items?.Sum(it => it.UnitPrice * it.Quantity) ?? 0m;
+    Func<GradProject.Web.Models.OrderStatus, string> badgeText = s => s.ToString();
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Invoice #@Model.Id</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+        }
+
+        h1, h2, h3 {
+            margin: 0 0 10px;
+        }
+
+        .muted {
+            color: #777;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+        }
+
+        th {
+            background: #f5f5f5;
+            text-align: left;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .totals {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Invoice – Order #@Model.Id</h2>
+    <div class="muted">
+        Date: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")<br />
+        Payment: @Model.PaymentMethod<br />
+        Status: @badgeText(Model.Status)
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width:50%">Product</th>
+                <th class="text-end" style="width:15%">Unit Price</th>
+                <th class="text-center" style="width:10%">Qty</th>
+                <th class="text-end" style="width:25%">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var it in Model.Items)
+            {
+                var name = it.Product != null ? it.Product.Name : "(deleted product)";
+                var sub = it.UnitPrice * it.Quantity;
+                <tr>
+                    <td>@name</td>
+                    <td class="text-end">@it.UnitPrice.ToString("C", usd)</td>
+                    <td class="text-center">@it.Quantity</td>
+                    <td class="text-end">@sub.ToString("C", usd)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3" class="text-end">Total</th>
+                <th class="text-end">@total.ToString("C", usd)</th>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>
