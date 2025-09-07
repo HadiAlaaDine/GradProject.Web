@@ -188,7 +188,7 @@ namespace GradProject.Web.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ConfirmCheckout()
+        public ActionResult ConfirmCheckout(string paymentMethod)
         {
             var userId = User.Identity.GetUserId();
 
@@ -203,6 +203,11 @@ namespace GradProject.Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            // حوّل قيمة الفورم إلى enum آمن
+            var method = (paymentMethod ?? "COD").Equals("ONLINE", StringComparison.OrdinalIgnoreCase)
+                ? GradProject.Web.Models.PaymentMethod.Online
+                : GradProject.Web.Models.PaymentMethod.CashOnDelivery;
+
             using (var tx = db.Database.BeginTransaction())
             {
                 try
@@ -211,7 +216,8 @@ namespace GradProject.Web.Controllers
                     {
                         UserId = userId,
                         CreatedAt = DateTime.UtcNow,
-                        Items = new List<OrderItem>() // مهم جدًا
+                        PaymentMethod = method,
+                        Items = new List<OrderItem>() // مهم
                     };
 
                     decimal total = 0m;
@@ -219,14 +225,12 @@ namespace GradProject.Web.Controllers
                     foreach (var ci in cartItems)
                     {
                         var unitPrice = ci.Product?.Price ?? 0m; // snapshot
-
                         order.Items.Add(new OrderItem
                         {
                             ProductId = ci.ProductId,
                             Quantity = ci.Quantity,
                             UnitPrice = unitPrice
                         });
-
                         total += unitPrice * ci.Quantity;
                     }
 
@@ -249,6 +253,7 @@ namespace GradProject.Web.Controllers
                 }
             }
         }
+
 
 
         protected override void Dispose(bool disposing)

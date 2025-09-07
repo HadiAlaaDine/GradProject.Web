@@ -86,13 +86,13 @@ else
             <thead class="table-light">
                 <tr>
                     <th>#</th>
-                    @* للأدمن بنعرض UserId *@
                     @if (User.IsInRole("Admin"))
                     {
                         <th>User Id</th>
                     }
                     <th>Created At</th>
                     <th class="text-end">Total (USD)</th>
+                    <th>Payment</th>
                     <th class="text-center">Items</th>
                     <th style="width:140px;">Actions</th>
                 </tr>
@@ -108,6 +108,7 @@ else
                         }
                         <td>@o.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td class="text-end">@o.Total.ToString("C", usd)</td>
+                        <td>@o.PaymentMethod</td>
                         <td class="text-center">@((o.Items != null) ? o.Items.Count : 0)</td>
                         <td>
                             @Html.ActionLink(
