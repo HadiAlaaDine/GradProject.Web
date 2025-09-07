@@ -2,6 +2,7 @@
 using GradProject.Web.Models.ViewModels;
 using Microsoft.AspNet.Identity;
 using Rotativa;
+using Rotativa.Options;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -193,12 +194,16 @@ namespace GradProject.Web.Controllers
             if (order == null) return HttpNotFound();
             if (!isAdmin && order.UserId != userId) return new HttpUnauthorizedResult();
 
-            // Rotativa: حوّل View لملف PDF
-            return new ViewAsPdf("Invoice", order)
+            // ✅ توليد PDF مع إعدادات أوضح
+            return new Rotativa.ViewAsPdf("Invoice", order)
             {
-                FileName = $"Invoice_Order_{order.Id}.pdf"
+                FileName = $"Invoice_Order_{order.Id}.pdf",
+                PageSize = Rotativa.Options.Size.A4,
+                PageMargins = new Rotativa.Options.Margins(10, 10, 15, 10), // left, right, top, bottom
+                IsGrayScale = false
             };
         }
+
 
         protected override void Dispose(bool disposing)
         {

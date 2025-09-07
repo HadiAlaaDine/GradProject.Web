@@ -1,9 +1,23 @@
 ﻿@model GradProject.Web.Models.Order
+@using System.Configuration
+
 @{
-    Layout = null; // PDF نظيف بدون Layout
+    Layout = null; // PDF بدون Layout
     var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
     decimal total = Model.Items?.Sum(it => it.UnitPrice * it.Quantity) ?? 0m;
-    Func<GradProject.Web.Models.OrderStatus, string> badgeText = s => s.ToString();
+
+    // ✅ اسحب معلومات المتجر من Web.config (appSettings)
+    string shopName = ConfigurationManager.AppSettings["Shop.Name"] ?? "Grad Shop";
+    string shopAddress = ConfigurationManager.AppSettings["Shop.Address"] ?? "Tripoli, Lebanon";
+    string shopEmail = ConfigurationManager.AppSettings["Shop.Email"] ?? "support@gradshop.local";
+    string shopPhone = ConfigurationManager.AppSettings["Shop.Phone"] ?? "+961-71-763234";
+    string shopLogoKey = ConfigurationManager.AppSettings["LogoPath"] ?? "~/Content/Logo.jpg";
+    string shopLogoUrl = !string.IsNullOrWhiteSpace(shopLogoKey) ? Url.Content(shopLogoKey) : "";
+
+    string customerId = Model.UserId;
+
+    Func<GradProject.Web.Models.OrderStatus, string> statusText = s => s.ToString();
+    Func<GradProject.Web.Models.PaymentMethod, string> payText = p => p.ToString();
 }
 
 <!DOCTYPE html>
@@ -15,29 +29,51 @@
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
+            color: #222;
         }
 
-        h1, h2, h3 {
-            margin: 0 0 10px;
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .col {
+            width: 48%;
+        }
+
+        h1, h2, h3, h4 {
+            margin: 0 0 8px;
         }
 
         .muted {
-            color: #777;
+            color: #666;
+        }
+
+        .box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .mt-2 {
+            margin-top: 12px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 10px;
         }
 
         th, td {
-            border: 1px solid #ddd;
-            padding: 6px;
+            border: 1px solid #e5e5e5;
+            padding: 6px 8px;
+            vertical-align: top;
         }
 
         th {
-            background: #f5f5f5;
+            background: #f7f7f7;
             text-align: left;
         }
 
@@ -49,20 +85,101 @@
             text-align: center;
         }
 
-        .totals {
-            margin-top: 10px;
+        .footer {
+            margin-top: 24px;
+            font-size: 11px;
+            color: #777;
+            text-align: center;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: .5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .bg-secondary {
+            background: #e0e0e0;
+        }
+
+        .bg-info {
+            background: #cce5ff;
+        }
+
+        .bg-primary {
+            background: #cfe2ff;
+        }
+
+        .bg-success {
+            background: #d1e7dd;
+        }
+
+        .bg-danger {
+            background: #f8d7da;
+        }
+
+        .logo {
+            max-height: 48px;
+        }
+
+        .header-right {
+            text-align: right;
         }
     </style>
 </head>
 <body>
-    <h2>Invoice – Order #@Model.Id</h2>
-    <div class="muted">
-        Date: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")<br />
-        Payment: @Model.PaymentMethod<br />
-        Status: @badgeText(Model.Status)
+
+    <!-- ترويسة -->
+    <div class="row mb-2">
+        <div class="col">
+            @if (!string.IsNullOrWhiteSpace(shopLogoUrl))
+            {
+                <div><img src="@shopLogoUrl" alt="Logo" class="logo" /></div>
+            }
+            <div class="brand">@shopName</div>
+            <div class="muted">@shopAddress</div>
+            <div class="muted">@shopEmail — @shopPhone</div>
+        </div>
+        <div class="col header-right">
+            <h2>Invoice</h2>
+            <div>Order #: <strong>@Model.Id</strong></div>
+            <div>Date: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+        </div>
     </div>
 
-    <table>
+    <!-- معلومات الزبون والدفع -->
+    <div class="row">
+        <div class="col box">
+            <h4 class="mb-1">Bill To</h4>
+            <div>Customer ID: <strong>@customerId</strong></div>
+        </div>
+        <div class="col box">
+            <h4 class="mb-1">Payment</h4>
+            <div>Method: <strong>@payText(Model.PaymentMethod)</strong></div>
+            <div>
+                Status:
+                @{
+                    var cls =
+                        Model.Status == GradProject.Web.Models.OrderStatus.Pending ? "badge bg-secondary" :
+                        Model.Status == GradProject.Web.Models.OrderStatus.Processing ? "badge bg-info" :
+                        Model.Status == GradProject.Web.Models.OrderStatus.Shipped ? "badge bg-primary" :
+                        Model.Status == GradProject.Web.Models.OrderStatus.Completed ? "badge bg-success" :
+                        "badge bg-danger";
+                }
+                <span class="@cls">@statusText(Model.Status)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول العناصر -->
+    <table class="mt-2">
         <thead>
             <tr>
                 <th style="width:50%">Product</th>
@@ -91,5 +208,9 @@
             </tr>
         </tfoot>
     </table>
+
+    <div class="footer">
+        Thank you for your purchase! | This invoice was generated automatically.
+    </div>
 </body>
 </html>
