@@ -215,6 +215,10 @@
     <Compile Include="Migrations\202509051735264_CreateOrders.Designer.cs">
       <DependentUpon>202509051735264_CreateOrders.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202509071030291_AddPaymentMethodToOrders.cs" />
+    <Compile Include="Migrations\202509071030291_AddPaymentMethodToOrders.Designer.cs">
+      <DependentUpon>202509071030291_AddPaymentMethodToOrders.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\CartItem.cs" />
@@ -376,6 +380,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202509051735264_CreateOrders.resx">
       <DependentUpon>202509051735264_CreateOrders.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202509071030291_AddPaymentMethodToOrders.resx">
+      <DependentUpon>202509071030291_AddPaymentMethodToOrders.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

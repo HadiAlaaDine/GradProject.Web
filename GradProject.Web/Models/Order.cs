@@ -7,6 +7,12 @@ using System.Web;
 
 namespace GradProject.Web.Models
 {
+    public enum PaymentMethod
+    {
+        CashOnDelivery = 0,
+        Online = 1
+    }
+
     public class Order
     {
         public int Id { get; set; }
@@ -19,6 +25,9 @@ namespace GradProject.Web.Models
 
         [DataType(DataType.Currency)]
         public decimal Total { get; set; }
+
+        // ✅ طريقة الدفع
+        public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
 
         // Navigation
         public virtual ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();

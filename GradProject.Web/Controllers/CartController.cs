@@ -185,13 +185,16 @@ namespace GradProject.Web.Controllers
         }
 
         // POST: /Cart/ConfirmCheckout
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult ConfirmCheckout()
         {
+            var userId = User.Identity.GetUserId();
+
             var cartItems = db.CartItems
                               .Include(c => c.Product)
-                              .Where(c => c.UserId == CurrentUserId)
+                              .Where(c => c.UserId == userId)
                               .ToList();
 
             if (!cartItems.Any())
@@ -206,26 +209,31 @@ namespace GradProject.Web.Controllers
                 {
                     var order = new Order
                     {
-                        UserId = CurrentUserId,
-                        CreatedAt = DateTime.UtcNow
+                        UserId = userId,
+                        CreatedAt = DateTime.UtcNow,
+                        Items = new List<OrderItem>() // مهم جدًا
                     };
 
                     decimal total = 0m;
+
                     foreach (var ci in cartItems)
                     {
-                        var price = ci.Product?.Price ?? 0m; // snapshot
+                        var unitPrice = ci.Product?.Price ?? 0m; // snapshot
+
                         order.Items.Add(new OrderItem
                         {
                             ProductId = ci.ProductId,
                             Quantity = ci.Quantity,
-                            UnitPrice = price
+                            UnitPrice = unitPrice
                         });
-                        total += price * ci.Quantity;
+
+                        total += unitPrice * ci.Quantity;
                     }
+
                     order.Total = total;
 
                     db.Orders.Add(order);
-                    db.CartItems.RemoveRange(cartItems);
+                    db.CartItems.RemoveRange(cartItems); // تفريغ السلة
                     db.SaveChanges();
 
                     tx.Commit();
@@ -241,6 +249,7 @@ namespace GradProject.Web.Controllers
                 }
             }
         }
+
 
         protected override void Dispose(bool disposing)
         {

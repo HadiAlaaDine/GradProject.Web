@@ -18,7 +18,7 @@ namespace GradProject.Web.Models
         [ForeignKey(nameof(OrderId))]
         public virtual Order Order { get; set; }
 
-        // FK: Product (خليه non-cascade حتى لو انمسح المنتج تبقى السجلات)
+        // FK: Product (non-cascade: حتى لو انمسح المنتج تبقى السجلات)
         [Required]
         public int ProductId { get; set; }
 
@@ -29,7 +29,7 @@ namespace GradProject.Web.Models
         public int Quantity { get; set; }
 
         [DataType(DataType.Currency)]
-        public decimal UnitPrice { get; set; }   // snapshot
+        public decimal UnitPrice { get; set; }   // snapshot وقت إنشاء الطلب
 
         [NotMapped]
         public decimal Subtotal => UnitPrice * Quantity;
