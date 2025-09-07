@@ -118,6 +118,44 @@ namespace GradProject.Web.Controllers
             return RedirectToAction("Profile");
         }
 
+        // GET: /Account/ChangePassword
+        [Authorize]
+        [HttpGet]
+        public ActionResult ChangePassword()
+        {
+            return View(new GradProject.Web.Models.ViewModels.ChangePasswordViewModel());
+        }
+
+        // POST: /Account/ChangePassword
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> ChangePassword(GradProject.Web.Models.ViewModels.ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = User.Identity.GetUserId();
+            var result = await UserManager.ChangePasswordAsync(userId, model.CurrentPassword, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                // إعادة تسجيل الدخول بكلمة السر الجديدة
+                var user = await UserManager.FindByIdAsync(userId);
+                if (user != null)
+                {
+                    await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+                }
+                TempData["Success"] = "Password changed successfully.";
+                return RedirectToAction("Profile");
+            }
+
+            foreach (var e in result.Errors)
+                ModelState.AddModelError("", e);
+
+            return View(model);
+        }
+
 
         //
         // GET: /Account/Login
