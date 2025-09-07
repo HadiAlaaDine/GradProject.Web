@@ -66,6 +66,59 @@ namespace GradProject.Web.Controllers
             return View(model);
         }
 
+        // GET: /Account/EditProfile
+        [Authorize]
+        [HttpGet]
+        public ActionResult EditProfile()
+        {
+            var userId = User.Identity.GetUserId();
+            var u = UserManager.FindById(userId);
+            if (u == null) return HttpNotFound();
+
+            var model = new GradProject.Web.Models.ViewModels.EditProfileViewModel
+            {
+                UserName = u.UserName,
+                Email = u.Email
+            };
+            return View(model);
+        }
+
+        // POST: /Account/EditProfile
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> EditProfile(GradProject.Web.Models.ViewModels.EditProfileViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var userId = User.Identity.GetUserId();
+            var u = await UserManager.FindByIdAsync(userId);
+            if (u == null) return HttpNotFound();
+
+            // تأكد أن الإيميل غير مستخدم من حساب آخر
+            var existing = await UserManager.FindByEmailAsync(model.Email);
+            if (existing != null && existing.Id != userId)
+            {
+                ModelState.AddModelError("Email", "This email is already used by another account.");
+                return View(model);
+            }
+
+            u.UserName = model.UserName?.Trim();
+            u.Email = model.Email?.Trim();
+
+            var result = await UserManager.UpdateAsync(u);
+            if (!result.Succeeded)
+            {
+                foreach (var e in result.Errors) ModelState.AddModelError("", e);
+                return View(model);
+            }
+
+            TempData["Success"] = "Profile updated successfully.";
+            return RedirectToAction("Profile");
+        }
+
+
         //
         // GET: /Account/Login
         [AllowAnonymous]
