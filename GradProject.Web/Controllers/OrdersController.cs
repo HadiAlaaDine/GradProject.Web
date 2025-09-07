@@ -21,16 +21,19 @@ namespace GradProject.Web.Controllers
         private readonly ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Orders
-        // Filters: from,to,minTotal,maxTotal | mineOnly (Admins only)
+        // Filters: from,to,minTotal,maxTotal | mineOnly (Admins only) | status,payment
         // Paging: page,pageSize
-        [Authorize] // كل المستخدمين لازم يكونوا مسجّلين
+        [Authorize]
         public ActionResult Index(
             string from, string to,
             decimal? minTotal, decimal? maxTotal,
             bool? mineOnly,
+            string status, string payment,
             int page = 1, int pageSize = 10)
         {
-            var q = db.Orders.AsQueryable();
+            var q = db.Orders
+                      .Include(o => o.Items)
+                      .AsQueryable();
 
             var userId = User.Identity.GetUserId();
             bool isAdmin = User.IsInRole("Admin");
@@ -43,32 +46,41 @@ namespace GradProject.Web.Controllers
             }
             else if (mineOnly == true)
             {
-                // إن كان Admin وفعّل "mineOnly"
                 q = q.Where(o => o.UserId == userId);
             }
 
-            // فلترة بالتواريخ (من عناصر input type="date")
+            // تواريخ
             DateTime dt;
             if (!string.IsNullOrWhiteSpace(from) && DateTime.TryParse(from, out dt))
-            {
-                var fromDate = dt.Date;                  // بداية اليوم
-                q = q.Where(o => o.CreatedAt >= fromDate);
-            }
+                q = q.Where(o => o.CreatedAt >= dt.Date);
 
             if (!string.IsNullOrWhiteSpace(to) && DateTime.TryParse(to, out dt))
-            {
-                var toExclusive = dt.Date.AddDays(1);    // أول لحظة من اليوم التالي (حد علوي حصري)
-                q = q.Where(o => o.CreatedAt < toExclusive);
-            }
+                q = q.Where(o => o.CreatedAt < dt.Date.AddDays(1)); // حد علوي حصري
 
-            // فلترة بالمبلغ
+            // مبالغ
             if (minTotal.HasValue) q = q.Where(o => o.Total >= minTotal.Value);
             if (maxTotal.HasValue) q = q.Where(o => o.Total <= maxTotal.Value);
 
-            // ترتيب افتراضي بالأحدث
+            // فلتر الحالة (اختياري)
+            GradProject.Web.Models.OrderStatus st;
+            if (!string.IsNullOrWhiteSpace(status) &&
+                Enum.TryParse(status, true, out st))
+            {
+                q = q.Where(o => o.Status == st);
+            }
+
+            // فلتر طريقة الدفع (اختياري)
+            GradProject.Web.Models.PaymentMethod pm;
+            if (!string.IsNullOrWhiteSpace(payment) &&
+                Enum.TryParse(payment, true, out pm))
+            {
+                q = q.Where(o => o.PaymentMethod == pm);
+            }
+
+            // ترتيب
             q = q.OrderByDescending(o => o.CreatedAt);
 
-            // ترقيم صفحات
+            // Paging
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
 
@@ -76,17 +88,19 @@ namespace GradProject.Web.Controllers
             var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
             if (page > totalPages && totalPages > 0) page = totalPages;
 
-            var items = q
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var items = q.Skip((page - 1) * pageSize)
+                         .Take(pageSize)
+                         .ToList();
 
-            // قيم إلى الـ View
+            // ViewBags
             ViewBag.from = from;
             ViewBag.to = to;
             ViewBag.minTotal = minTotal;
             ViewBag.maxTotal = maxTotal;
             ViewBag.mineOnly = mineOnly ?? false;
+
+            ViewBag.status = status;
+            ViewBag.payment = payment;
 
             ViewBag.page = page;
             ViewBag.pageSize = pageSize;
@@ -95,6 +109,7 @@ namespace GradProject.Web.Controllers
 
             return View(items);
         }
+
 
 
         // GET: /Orders/Details/5

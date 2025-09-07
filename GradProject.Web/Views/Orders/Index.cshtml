@@ -16,6 +16,10 @@
     var maxTotal = ViewBag.maxTotal;
     bool mineOnly = ViewBag.mineOnly ?? false;
 
+    // NEW: current filters
+    string status = ViewBag.status as string;      // e.g. "Pending"
+    string payment = ViewBag.payment as string;    // e.g. "CashOnDelivery"
+
     Func<GradProject.Web.Models.OrderStatus, string> badge = s =>
         s == GradProject.Web.Models.OrderStatus.Pending ? "badge bg-secondary" :
         s == GradProject.Web.Models.OrderStatus.Processing ? "badge bg-info" :
@@ -47,10 +51,38 @@
                value="@(maxTotal ?? "")" class="form-control" placeholder="Max total $" />
     </div>
 
+    <!-- NEW: Payment filter -->
+    <div class="col-md-2">
+        <select name="payment" class="form-select">
+            <option value="">-- All Payments --</option>
+            @foreach (var p in Enum.GetNames(typeof(GradProject.Web.Models.PaymentMethod)))
+            {
+                <option value="@p" @(string.Equals(payment, p, System.StringComparison.OrdinalIgnoreCase) ? "selected" : "")>
+                    @p
+                </option>
+            }
+        </select>
+        <small class="text-muted">Payment</small>
+    </div>
+
+    <!-- NEW: Status filter -->
+    <div class="col-md-2">
+        <select name="status" class="form-select">
+            <option value="">-- All Statuses --</option>
+            @foreach (var s in Enum.GetNames(typeof(GradProject.Web.Models.OrderStatus)))
+            {
+                <option value="@s" @(string.Equals(status, s, System.StringComparison.OrdinalIgnoreCase) ? "selected" : "")>
+                    @s
+                </option>
+            }
+        </select>
+        <small class="text-muted">Status</small>
+    </div>
+
     @* يظهر فقط للإدمن *@
     if (User.IsInRole("Admin"))
     {
-        <div class="col-md-2 d-flex align-items-center">
+        <div class="col-md-3 d-flex align-items-center">
             <div class="form-check mt-1">
                 <input class="form-check-input" type="checkbox" id="mineOnly" name="mineOnly"
                        value="true" @(mineOnly ? "checked" : "") />
@@ -141,7 +173,9 @@ else
                         to,
                         minTotal,
                         maxTotal,
-                        mineOnly
+                        mineOnly,
+                        status,
+                        payment
                     };
 
                     int start = System.Math.Max(1, page - 2);
