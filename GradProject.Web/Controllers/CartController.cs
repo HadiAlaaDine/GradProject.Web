@@ -203,6 +203,7 @@ namespace GradProject.Web.Controllers
         public ActionResult Checkout()
         {
             var userId = User.Identity.GetUserId();
+
             var items = db.CartItems
                           .Include(c => c.Product)
                           .Where(c => c.UserId == userId)
@@ -214,16 +215,16 @@ namespace GradProject.Web.Controllers
                 return RedirectToAction("Index");
             }
 
-            // نعبّي نموذج افتراضي
             var vm = new CheckoutViewModel
             {
                 Items = items,
-                ShipFullName = User.Identity.Name,   // اختياري
-                ShipCountry = "Lebanon"              // اختياري
+                ShipFullName = User.Identity.Name, // اختياري
+                ShipCountry = "Lebanon"            // اختياري
             };
 
             return View(vm);
         }
+
 
         // POST: /Cart/ConfirmCheckout
         [Authorize]

@@ -40,6 +40,8 @@ namespace GradProject.Web.Models
         public DbSet<Order> Orders { get; set; }
         // هون أضفنا DbSet لـ OrderItem
         public DbSet<OrderItem> OrderItems { get; set; }
+        // هون أضفنا DbSet لـ ShippingAddresses
+        public DbSet<ShippingAddress> ShippingAddresses { get; set; }
 
         // هون أضفنا ال OnModelCreating
         protected override void OnModelCreating(System.Data.Entity.DbModelBuilder modelBuilder)

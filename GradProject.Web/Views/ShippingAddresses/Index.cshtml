@@ -1,0 +1,80 @@
+﻿@model IEnumerable<GradProject.Web.Models.ShippingAddress>
+@using System.Linq
+@{
+    ViewBag.Title = "My Addresses";
+}
+
+<h2>My Addresses</h2>
+
+@Html.Partial("_Alerts")
+
+<p>
+    @Html.ActionLink("Add New Address", "Create", "ShippingAddresses", null, new { @class = "btn btn-success" })
+</p>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">You have no saved addresses.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Address</th>
+                    <th>City</th>
+                    <th>Country</th>
+                    <th>Default</th>
+                    <th style="width:240px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr>
+                        <td>@a.FullName</td>
+                        <td>@a.Phone</td>
+                        <td>
+                            @a.AddressLine1
+                            @if (!string.IsNullOrWhiteSpace(a.AddressLine2))
+                            {<text>, @a.AddressLine2</text>;
+                        }
+                        </td>
+                        <td>
+                            @a.City
+                            @if (!string.IsNullOrWhiteSpace(a.State))
+                            {<text> - @a.State</text>;
+                        }
+                            @if (!string.IsNullOrWhiteSpace(a.PostalCode))
+                            {<div class="text-muted small">(@a.PostalCode)</div>;
+                        }
+                        </td>
+                        <td>@a.Country</td>
+                        <td>
+                            @if (a.IsDefault)
+                            {
+                                <span class="badge bg-success">Default</span>
+                            }
+                            else
+                            {
+                                using (Html.BeginForm("MakeDefault", "ShippingAddresses", FormMethod.Post, new { @class = "d-inline" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    @Html.Hidden("id", a.Id)
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Make Default</button>
+                                }
+                            }
+                        </td>
+                        <td>
+                            @Html.ActionLink("Edit", "Edit", "ShippingAddresses", new { id = a.Id }, new { @class = "btn btn-sm btn-warning me-1" })
+                            @Html.ActionLink("Delete", "Delete", "ShippingAddresses", new { id = a.Id }, new { @class = "btn btn-sm btn-danger" })
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
