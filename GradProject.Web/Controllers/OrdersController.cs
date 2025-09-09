@@ -42,7 +42,7 @@ namespace GradProject.Web.Controllers
             if (!isAdmin)
             {
                 q = q.Where(o => o.UserId == userId);
-                mineOnly = true; // للعرض في الفورم فقط
+                mineOnly = true;
             }
             else if (mineOnly == true)
             {
@@ -62,7 +62,7 @@ namespace GradProject.Web.Controllers
             if (maxTotal.HasValue) q = q.Where(o => o.Total <= maxTotal.Value);
 
             // فلتر الحالة (اختياري)
-            GradProject.Web.Models.OrderStatus st;
+            OrderStatus st;
             if (!string.IsNullOrWhiteSpace(status) &&
                 Enum.TryParse(status, true, out st))
             {
@@ -70,7 +70,7 @@ namespace GradProject.Web.Controllers
             }
 
             // فلتر طريقة الدفع (اختياري)
-            GradProject.Web.Models.PaymentMethod pm;
+            PaymentMethod pm;
             if (!string.IsNullOrWhiteSpace(payment) &&
                 Enum.TryParse(payment, true, out pm))
             {
@@ -110,8 +110,6 @@ namespace GradProject.Web.Controllers
             return View(items);
         }
 
-
-
         // GET: /Orders/Details/5
         [Authorize]
         [HttpGet]
@@ -134,7 +132,6 @@ namespace GradProject.Web.Controllers
             return View(order);
         }
 
-
         [Authorize(Roles = "Admin")]
         public ActionResult Dashboard()
         {
@@ -144,13 +141,8 @@ namespace GradProject.Web.Controllers
 
             var model = new OrdersDashboardViewModel
             {
-                // العدد الكلي للطلبات
                 TotalOrders = orders.Count,
-
-                // مجموع الإيرادات
                 TotalRevenue = orders.Sum(o => o.Total),
-
-                // آخر 5 طلبات
                 RecentOrders = orders
                     .OrderByDescending(o => o.CreatedAt)
                     .Take(5)
@@ -161,8 +153,6 @@ namespace GradProject.Web.Controllers
                         Total = o.Total
                     })
                     .ToList(),
-
-                // أكثر 5 منتجات مبيعاً (لو المنتج null منسميه Unknown)
                 TopProducts = orders
                     .SelectMany(o => o.Items)
                     .GroupBy(i => i.Product != null ? i.Product.Name : "(Unknown)")
@@ -179,7 +169,6 @@ namespace GradProject.Web.Controllers
             return View(model);
         }
 
-
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -188,7 +177,6 @@ namespace GradProject.Web.Controllers
             var order = db.Orders.Find(id);
             if (order == null) return HttpNotFound();
 
-            // حاول تحوّل النصّ إلى enum بشكل آمن
             OrderStatus newStatus;
             if (!Enum.TryParse<OrderStatus>(status, true, out newStatus))
             {
@@ -204,6 +192,40 @@ namespace GradProject.Web.Controllers
         }
 
         [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Cancel(int id, string reason = null)
+        {
+            var userId = User.Identity.GetUserId();
+            var isAdmin = User.IsInRole("Admin");
+
+            var order = db.Orders.FirstOrDefault(o => o.Id == id);
+            if (order == null) return HttpNotFound();
+
+            // المسموح له: صاحب الطلب أو الأدمن
+            if (!isAdmin && order.UserId != userId)
+                return new HttpUnauthorizedResult();
+
+            // حالات غير قابلة للإلغاء
+            if (order.Status == OrderStatus.Shipped ||
+                order.Status == OrderStatus.Completed ||
+                order.Status == OrderStatus.Cancelled)
+            {
+                TempData["Error"] = "This order cannot be cancelled.";
+                return RedirectToAction("Details", new { id });
+            }
+
+            order.Status = OrderStatus.Cancelled;
+            db.SaveChanges();
+
+            TempData["Success"] = "Order cancelled.";
+            return RedirectToAction("Details", new { id });
+        }
+
+
+        // GET: /Orders/Invoice/5
+        [Authorize]
+        [HttpGet]
         public ActionResult Invoice(int id)
         {
             var userId = User.Identity.GetUserId();
@@ -216,16 +238,15 @@ namespace GradProject.Web.Controllers
             if (order == null) return HttpNotFound();
             if (!isAdmin && order.UserId != userId) return new HttpUnauthorizedResult();
 
-            // ✅ توليد PDF مع إعدادات أوضح
-            return new Rotativa.ViewAsPdf("Invoice", order)
+            // PDF (Margins order: Top, Right, Bottom, Left)
+            return new ViewAsPdf("Invoice", order)
             {
                 FileName = $"Invoice_Order_{order.Id}.pdf",
-                PageSize = Rotativa.Options.Size.A4,
-                PageMargins = new Rotativa.Options.Margins(10, 10, 15, 10), // left, right, top, bottom
+                PageSize = Size.A4,
+                PageMargins = new Rotativa.Options.Margins(15, 10, 10, 10),
                 IsGrayScale = false
             };
         }
-
 
         protected override void Dispose(bool disposing)
         {

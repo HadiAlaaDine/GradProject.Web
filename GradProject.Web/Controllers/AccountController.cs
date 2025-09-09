@@ -96,16 +96,25 @@ namespace GradProject.Web.Controllers
             var u = await UserManager.FindByIdAsync(userId);
             if (u == null) return HttpNotFound();
 
+            // تأكد أن اسم المستخدم غير مستخدم من حساب آخر
+            var existingByName = await UserManager.FindByNameAsync(model.UserName);
+            if (existingByName != null && existingByName.Id != userId)
+            {
+                ModelState.AddModelError("UserName", "This username is already used by another account.");
+                return View(model);
+            }
+
             // تأكد أن الإيميل غير مستخدم من حساب آخر
-            var existing = await UserManager.FindByEmailAsync(model.Email);
-            if (existing != null && existing.Id != userId)
+            var existingByEmail = await UserManager.FindByEmailAsync(model.Email);
+            if (existingByEmail != null && existingByEmail.Id != userId)
             {
                 ModelState.AddModelError("Email", "This email is already used by another account.");
                 return View(model);
             }
 
-            u.UserName = model.UserName?.Trim();
-            u.Email = model.Email?.Trim();
+            // حدّث القيم (حافظ على التطبيع)
+            u.UserName = (model.UserName ?? "").Trim();
+            u.Email = (model.Email ?? "").Trim();
 
             var result = await UserManager.UpdateAsync(u);
             if (!result.Succeeded)
@@ -114,9 +123,13 @@ namespace GradProject.Web.Controllers
                 return View(model);
             }
 
+            // جدّد الكوكي حتى تنعكس القيم فوراً بالـ UI
+            await SignInManager.SignInAsync(u, isPersistent: false, rememberBrowser: false);
+
             TempData["Success"] = "Profile updated successfully.";
             return RedirectToAction("Profile");
         }
+
 
         // GET: /Account/ChangePassword
         [Authorize]

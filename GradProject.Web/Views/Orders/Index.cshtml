@@ -1,5 +1,6 @@
 ﻿@model IEnumerable<GradProject.Web.Models.Order>
 @using System.Globalization
+@using Microsoft.AspNet.Identity
 
 @{
     ViewBag.Title = "Orders";
@@ -16,7 +17,7 @@
     var maxTotal = ViewBag.maxTotal;
     bool mineOnly = ViewBag.mineOnly ?? false;
 
-    // NEW: current filters
+    // current filters
     string status = ViewBag.status as string;      // e.g. "Pending"
     string payment = ViewBag.payment as string;    // e.g. "CashOnDelivery"
 
@@ -51,7 +52,7 @@
                value="@(maxTotal ?? "")" class="form-control" placeholder="Max total $" />
     </div>
 
-    <!-- NEW: Payment filter -->
+    <!-- Payment filter -->
     <div class="col-md-2">
         <select name="payment" class="form-select">
             <option value="">-- All Payments --</option>
@@ -65,7 +66,7 @@
         <small class="text-muted">Payment</small>
     </div>
 
-    <!-- NEW: Status filter -->
+    <!-- Status filter -->
     <div class="col-md-2">
         <select name="status" class="form-select">
             <option value="">-- All Statuses --</option>
@@ -133,12 +134,16 @@ else
                     <th>Payment</th>
                     <th>Status</th>
                     <th class="text-center">Items</th>
-                    <th style="width:140px;">Actions</th>
+                    <th style="width:220px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var o in Model)
                 {
+                    var canCancel = (User.IsInRole("Admin") || User.Identity.GetUserId() == o.UserId) &&
+                                    (o.Status == GradProject.Web.Models.OrderStatus.Pending ||
+                                     o.Status == GradProject.Web.Models.OrderStatus.Processing);
+
                     <tr>
                         <td>@o.Id</td>
                         @if (User.IsInRole("Admin"))
@@ -151,7 +156,20 @@ else
                         <td><span class="@badge(o.Status)">@o.Status</span></td>
                         <td class="text-center">@((o.Items != null) ? o.Items.Count : 0)</td>
                         <td>
-                            @Html.ActionLink("Details", "Details", "Orders", new { id = o.Id }, new { @class = "btn btn-sm btn-info" })
+                            @Html.ActionLink("Details", "Details", "Orders", new { id = o.Id }, new { @class = "btn btn-sm btn-info me-1" })
+
+                            @if (canCancel)
+                            {
+                                using (Html.BeginForm("Cancel", "Orders", FormMethod.Post, new { @class = "d-inline" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    @Html.Hidden("id", o.Id)
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            onclick="return confirm('Cancel order #@o.Id ?');">
+                                        Cancel
+                                    </button>
+                                }
+                            }
                         </td>
                     </tr>
                 }

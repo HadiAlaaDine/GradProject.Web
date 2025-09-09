@@ -1,4 +1,6 @@
 ﻿@model GradProject.Web.Models.Order
+@using Microsoft.AspNet.Identity
+
 @{
     ViewBag.Title = "Order #" + Model.Id;
     var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
@@ -21,7 +23,23 @@
 
 <div class="mb-3">
     @Html.ActionLink("Back to Orders", "Index", "Orders", null, new { @class = "btn btn-outline-secondary me-2" })
-    @Html.ActionLink("Download Invoice (PDF)", "Invoice", "Orders", new { id = Model.Id }, new { @class = "btn btn-success btn-sm" })
+    @Html.ActionLink("Download Invoice (PDF)", "Invoice", "Orders", new { id = Model.Id }, new { @class = "btn btn-success btn-sm me-2" })
+
+    @* زر الإلغاء يظهر للمستخدم صاحب الطلب أو الأدمن، وفقط إن كانت الحالة قابلة للإلغاء *@
+    @if ((User.IsInRole("Admin") || User.Identity.GetUserId() == Model.UserId) &&
+        (Model.Status == GradProject.Web.Models.OrderStatus.Pending ||
+         Model.Status == GradProject.Web.Models.OrderStatus.Processing))
+    {
+        using (Html.BeginForm("Cancel", "Orders", FormMethod.Post, new { @class = "d-inline" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.Hidden("id", Model.Id)
+            <button type="submit" class="btn btn-danger btn-sm"
+                    onclick="return confirm('Are you sure you want to cancel this order?');">
+                Cancel Order
+            </button>
+        }
+    }
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Model.ShipFullName) ||
