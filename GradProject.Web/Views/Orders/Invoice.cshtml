@@ -6,15 +6,13 @@
     var usd = System.Globalization.CultureInfo.GetCultureInfo("en-US");
     decimal total = Model.Items?.Sum(it => it.UnitPrice * it.Quantity) ?? 0m;
 
-    // اسحب معلومات المتجر من Web.config (appSettings)
+    // متغيّرات من Web.config
     string shopName = ConfigurationManager.AppSettings["Shop.Name"] ?? "Grad Shop";
     string shopAddress = ConfigurationManager.AppSettings["Shop.Address"] ?? "Tripoli, Lebanon";
     string shopEmail = ConfigurationManager.AppSettings["Shop.Email"] ?? "support@gradshop.local";
     string shopPhone = ConfigurationManager.AppSettings["Shop.Phone"] ?? "+961-71-763234";
     string shopLogoKey = ConfigurationManager.AppSettings["LogoPath"] ?? "~/Content/Logo.jpg";
     string shopLogoUrl = !string.IsNullOrWhiteSpace(shopLogoKey) ? Url.Content(shopLogoKey) : "";
-
-    string customerId = Model.UserId;
 
     Func<GradProject.Web.Models.OrderStatus, string> statusText = s => s.ToString();
     Func<GradProject.Web.Models.PaymentMethod, string> payText = p => p.ToString();
@@ -136,8 +134,8 @@
 </head>
 <body>
 
-    <!-- ترويسة -->
-    <div class="row mb-2">
+    <!-- Header -->
+    <div class="row">
         <div class="col">
             @if (!string.IsNullOrWhiteSpace(shopLogoUrl))
             {
@@ -151,34 +149,36 @@
             <h2>Invoice</h2>
             <div>Order #: <strong>@Model.Id</strong></div>
             <div>Date: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+            <div>Payment: @payText(Model.PaymentMethod)</div>
+            @{
+                var cls =
+                    Model.Status == GradProject.Web.Models.OrderStatus.Pending ? "badge bg-secondary" :
+                    Model.Status == GradProject.Web.Models.OrderStatus.Processing ? "badge bg-info" :
+                    Model.Status == GradProject.Web.Models.OrderStatus.Shipped ? "badge bg-primary" :
+                    Model.Status == GradProject.Web.Models.OrderStatus.Completed ? "badge bg-success" : "badge bg-danger";
+            }
+            <div>Status: <span class="@cls">@statusText(Model.Status)</span></div>
         </div>
     </div>
 
-    <!-- معلومات الزبون والدفع -->
-    <div class="row">
+    <!-- Billing / Shipping -->
+    <div class="row mt-2">
         <div class="col box">
             <h4 class="mb-1">Bill To</h4>
-            <div>Customer ID: <strong>@customerId</strong></div>
+            <div>Customer ID: <strong>@Model.UserId</strong></div>
         </div>
         <div class="col box">
-            <h4 class="mb-1">Payment</h4>
-            <div>Method: <strong>@payText(Model.PaymentMethod)</strong></div>
-            <div>
-                Status:
-                @{
-                    var cls =
-                        Model.Status == GradProject.Web.Models.OrderStatus.Pending ? "badge bg-secondary" :
-                        Model.Status == GradProject.Web.Models.OrderStatus.Processing ? "badge bg-info" :
-                        Model.Status == GradProject.Web.Models.OrderStatus.Shipped ? "badge bg-primary" :
-                        Model.Status == GradProject.Web.Models.OrderStatus.Completed ? "badge bg-success" :
-                        "badge bg-danger";
-                }
-                <span class="@cls">@statusText(Model.Status)</span>
-            </div>
+            <h4 class="mb-1">Ship To</h4>
+            <div><strong>Name:</strong> @(string.IsNullOrWhiteSpace(Model.ShipFullName) ? "-" : Model.ShipFullName)</div>
+            <div><strong>Address 1:</strong> @(string.IsNullOrWhiteSpace(Model.ShipAddress1) ? "-" : Model.ShipAddress1)</div>
+            <div><strong>Address 2:</strong> @(string.IsNullOrWhiteSpace(Model.ShipAddress2) ? "-" : Model.ShipAddress2)</div>
+            <div><strong>City:</strong> @(string.IsNullOrWhiteSpace(Model.ShipCity) ? "-" : Model.ShipCity)</div>
+            <div><strong>Country:</strong> @(string.IsNullOrWhiteSpace(Model.ShipCountry) ? "-" : Model.ShipCountry)</div>
+            <div><strong>Phone:</strong> @(string.IsNullOrWhiteSpace(Model.ShipPhone) ? "-" : Model.ShipPhone)</div>
         </div>
     </div>
 
-    <!-- جدول العناصر -->
+    <!-- Items -->
     <table class="mt-2">
         <thead>
             <tr>
