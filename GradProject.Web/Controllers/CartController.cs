@@ -215,6 +215,7 @@ namespace GradProject.Web.Controllers
                 return RedirectToAction("Index");
             }
 
+            // نموذج افتراضي
             var vm = new CheckoutViewModel
             {
                 Items = items,
@@ -222,8 +223,26 @@ namespace GradProject.Web.Controllers
                 ShipCountry = "Lebanon"            // اختياري
             };
 
+            // ✅ تعبئة تلقائية من العنوان الافتراضي (إن وجد)
+            var def = db.ShippingAddresses
+                        .Where(a => a.UserId == userId)
+                        .OrderByDescending(a => a.IsDefault)
+                        .ThenByDescending(a => a.CreatedAt)
+                        .FirstOrDefault();
+
+            if (def != null)
+            {
+                vm.ShipFullName = def.FullName;
+                vm.ShipAddress1 = def.AddressLine1;
+                vm.ShipAddress2 = def.AddressLine2;
+                vm.ShipCity = def.City;
+                vm.ShipCountry = def.Country;
+                vm.ShipPhone = def.Phone;
+            }
+
             return View(vm);
         }
+
 
 
         // POST: /Cart/ConfirmCheckout
