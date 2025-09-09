@@ -17,8 +17,37 @@
 
     @Html.ValidationSummary(true, "", new { @class = "text-danger" })
 
-    <!-- Left: Shipping Info -->
+    <!-- Left -->
     <div class="col-md-6">
+
+        @* ✅ عناوين الشحن المحفوظة *@
+        @if (Model.SavedAddresses != null && Model.SavedAddresses.Any())
+        {
+            <div class="card mb-3">
+                <div class="card-header">Saved Addresses</div>
+                <div class="card-body">
+                    <select id="savedAddr" class="form-select">
+                        @foreach (var a in Model.SavedAddresses)
+                        {
+                            <option value="@a.Id"
+                                    data-fullname="@a.FullName"
+                                    data-phone="@a.Phone"
+                                    data-address1="@a.AddressLine1"
+                                    data-address2="@a.AddressLine2"
+                                    data-city="@a.City"
+                                    data-country="@a.Country">
+                                @a.FullName — @a.AddressLine1, @a.City (@a.Country) @(a.IsDefault ? "[Default]" : "")
+                            </option>
+                        }
+                    </select>
+                    <button type="button" id="fillAddrBtn" class="btn btn-outline-primary mt-2">
+                        Use this address
+                    </button>
+                </div>
+            </div>
+        }
+
+        @* معلومات الشحن *@
         <div class="card mb-3">
             <div class="card-header">Shipping Information</div>
             <div class="card-body">
@@ -63,6 +92,7 @@
             </div>
         </div>
 
+        @* طريقة الدفع *@
         <div class="card mb-3">
             <div class="card-header">Payment Method</div>
             <div class="card-body">
@@ -126,4 +156,21 @@
 
 @section Scripts {
     @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        (function () {
+            var $sel = $('#savedAddr');
+            $('#fillAddrBtn').on('click', function () {
+                var $opt = $sel.find('option:selected');
+                if ($opt.length === 0) return;
+
+                // عبّي الحقول من الداتا بالـ option
+                $('#ShipFullName').val($opt.data('fullname'));
+                $('#ShipPhone').val($opt.data('phone'));
+                $('#ShipAddress1').val($opt.data('address1'));
+                $('#ShipAddress2').val($opt.data('address2'));
+                $('#ShipCity').val($opt.data('city'));
+                $('#ShipCountry').val($opt.data('country'));
+            });
+        })();
+    </script>
 }

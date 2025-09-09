@@ -168,13 +168,11 @@ namespace GradProject.Web.Controllers
             return RedirectToAction("Index");
         }
 
-        // ضع هذا الـViewModel داخل CartController (قبل الأفعال/الـactions أو في أعلى الملف)
+        // ===== ViewModel =====
         public class CheckoutViewModel
         {
-            // لعرض عناصر السلة
             public List<CartItem> Items { get; set; } = new List<CartItem>();
 
-            // بيانات الشحن (مطلوبة)
             [Required, StringLength(100)]
             public string ShipFullName { get; set; }
 
@@ -193,8 +191,10 @@ namespace GradProject.Web.Controllers
             [StringLength(30)]
             public string ShipPhone { get; set; }
 
-            // طريقة الدفع من الفورم: "COD" أو "ONLINE"
             public string PaymentMethod { get; set; } = "COD";
+
+            // ✅ لعرض العناوين المحفوظة في صفحة الـCheckout
+            public List<ShippingAddress> SavedAddresses { get; set; } = new List<ShippingAddress>();
         }
 
         // GET: /Cart/Checkout
@@ -215,21 +215,20 @@ namespace GradProject.Web.Controllers
                 return RedirectToAction("Index");
             }
 
-            // نموذج افتراضي
             var vm = new CheckoutViewModel
             {
                 Items = items,
                 ShipFullName = User.Identity.Name, // اختياري
-                ShipCountry = "Lebanon"            // اختياري
+                ShipCountry = "Lebanon",           // اختياري
+                SavedAddresses = db.ShippingAddresses
+                                   .Where(a => a.UserId == userId)
+                                   .OrderByDescending(a => a.IsDefault)
+                                   .ThenByDescending(a => a.CreatedAt)
+                                   .ToList()
             };
 
-            // ✅ تعبئة تلقائية من العنوان الافتراضي (إن وجد)
-            var def = db.ShippingAddresses
-                        .Where(a => a.UserId == userId)
-                        .OrderByDescending(a => a.IsDefault)
-                        .ThenByDescending(a => a.CreatedAt)
-                        .FirstOrDefault();
-
+            // تعبئة تلقائية من العنوان الافتراضي إن وجد
+            var def = vm.SavedAddresses.FirstOrDefault();
             if (def != null)
             {
                 vm.ShipFullName = def.FullName;
@@ -243,8 +242,6 @@ namespace GradProject.Web.Controllers
             return View(vm);
         }
 
-
-
         // POST: /Cart/ConfirmCheckout
         [Authorize]
         [HttpPost]
@@ -253,7 +250,7 @@ namespace GradProject.Web.Controllers
         {
             var userId = User.Identity.GetUserId();
 
-            // نعيد جلب العناصر لعرضها لو فيه خطأ فالتحقق
+            // إعادة العناصر
             vm.Items = db.CartItems
                          .Include(c => c.Product)
                          .Where(c => c.UserId == userId)
@@ -265,17 +262,22 @@ namespace GradProject.Web.Controllers
                 return RedirectToAction("Index");
             }
 
-            // تحقّق الموديل (لأن حقول الشحن Required)
+            // لو في أخطاء تحقق: اعرض الصفحة من جديد ومعها العناوين المحفوظة
             if (!ModelState.IsValid)
             {
-                // ارجِع لنفس صفحة الـCheckout مع رسائل التحقق
+                vm.SavedAddresses = db.ShippingAddresses
+                    .Where(a => a.UserId == userId)
+                    .OrderByDescending(a => a.IsDefault)
+                    .ThenByDescending(a => a.CreatedAt)
+                    .ToList();
+
                 return View("Checkout", vm);
             }
 
-            // حوّل طريقة الدفع إلى enum آمن
+            // طريقة الدفع
             var method = (vm.PaymentMethod ?? "COD").Equals("ONLINE", StringComparison.OrdinalIgnoreCase)
-                ? GradProject.Web.Models.PaymentMethod.Online
-                : GradProject.Web.Models.PaymentMethod.CashOnDelivery;
+                ? PaymentMethod.Online
+                : PaymentMethod.CashOnDelivery;
 
             using (var tx = db.Database.BeginTransaction())
             {
@@ -287,7 +289,6 @@ namespace GradProject.Web.Controllers
                         CreatedAt = DateTime.UtcNow,
                         PaymentMethod = method,
 
-                        // 🟢 حقول الشحن الجديدة
                         ShipFullName = vm.ShipFullName?.Trim(),
                         ShipAddress1 = vm.ShipAddress1?.Trim(),
                         ShipAddress2 = vm.ShipAddress2?.Trim(),
@@ -331,9 +332,6 @@ namespace GradProject.Web.Controllers
                 }
             }
         }
-
-
-
 
         protected override void Dispose(bool disposing)
         {
