@@ -1,0 +1,7 @@
+﻿@{ var count = (int)(ViewBag.Count ?? 0); }
+<li class="nav-item">
+    <a class="nav-link" href="@Url.Action("Index","Cart")">
+        <span class="glyphicon glyphicon-shopping-cart"></span>
+        Cart <span class="badge bg-info">@count</span>
+    </a>
+</li>

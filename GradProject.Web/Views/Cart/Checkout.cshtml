@@ -1,0 +1,176 @@
+﻿@model GradProject.Web.Controllers.CartController.CheckoutViewModel
+@using System.Globalization
+
+@{
+    ViewBag.Title = "Checkout";
+    var usd = CultureInfo.GetCultureInfo("en-US");
+    var items = (Model.Items ?? new List<GradProject.Web.Models.CartItem>());
+    decimal total = items.Sum(ci => (ci.Product?.Price ?? 0m) * ci.Quantity);
+}
+
+<h2>Checkout</h2>
+<p class="text-muted">Review your order, enter shipping info, and choose payment method.</p>
+
+@using (Html.BeginForm("ConfirmCheckout", "Cart", FormMethod.Post, new { @class = "row" }))
+{
+    @Html.AntiForgeryToken()
+
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <!-- Left -->
+    <div class="col-md-6">
+
+        @* ✅ عناوين الشحن المحفوظة *@
+        @if (Model.SavedAddresses != null && Model.SavedAddresses.Any())
+        {
+            <div class="card mb-3">
+                <div class="card-header">Saved Addresses</div>
+                <div class="card-body">
+                    <select id="savedAddr" class="form-select">
+                        @foreach (var a in Model.SavedAddresses)
+                        {
+                            <option value="@a.Id"
+                                    data-fullname="@a.FullName"
+                                    data-phone="@a.Phone"
+                                    data-address1="@a.AddressLine1"
+                                    data-address2="@a.AddressLine2"
+                                    data-city="@a.City"
+                                    data-country="@a.Country">
+                                @a.FullName — @a.AddressLine1, @a.City (@a.Country) @(a.IsDefault ? "[Default]" : "")
+                            </option>
+                        }
+                    </select>
+                    <button type="button" id="fillAddrBtn" class="btn btn-outline-primary mt-2">
+                        Use this address
+                    </button>
+                </div>
+            </div>
+        }
+
+        @* معلومات الشحن *@
+        <div class="card mb-3">
+            <div class="card-header">Shipping Information</div>
+            <div class="card-body">
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipFullName, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipFullName, new { @class = "form-control", placeholder = "Full name" })
+                    @Html.ValidationMessageFor(m => m.ShipFullName, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipAddress1, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipAddress1, new { @class = "form-control", placeholder = "Address line 1" })
+                    @Html.ValidationMessageFor(m => m.ShipAddress1, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipAddress2, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipAddress2, new { @class = "form-control", placeholder = "Address line 2 (optional)" })
+                    @Html.ValidationMessageFor(m => m.ShipAddress2, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="row">
+                    <div class="col-sm-6 mb-3">
+                        @Html.LabelFor(m => m.ShipCity, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.ShipCity, new { @class = "form-control", placeholder = "City" })
+                        @Html.ValidationMessageFor(m => m.ShipCity, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        @Html.LabelFor(m => m.ShipCountry, new { @class = "form-label" })
+                        @Html.TextBoxFor(m => m.ShipCountry, new { @class = "form-control", placeholder = "Country" })
+                        @Html.ValidationMessageFor(m => m.ShipCountry, "", new { @class = "text-danger" })
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.ShipPhone, new { @class = "form-label" })
+                    @Html.TextBoxFor(m => m.ShipPhone, new { @class = "form-control", placeholder = "Phone (optional)" })
+                    @Html.ValidationMessageFor(m => m.ShipPhone, "", new { @class = "text-danger" })
+                </div>
+
+            </div>
+        </div>
+
+        @* طريقة الدفع *@
+        <div class="card mb-3">
+            <div class="card-header">Payment Method</div>
+            <div class="card-body">
+                <div class="form-check">
+                    @Html.RadioButtonFor(m => m.PaymentMethod, "COD", new { @class = "form-check-input", id = "pmCOD" })
+                    <label class="form-check-label" for="pmCOD">Cash on Delivery (COD)</label>
+                </div>
+                <div class="form-check mt-2">
+                    @Html.RadioButtonFor(m => m.PaymentMethod, "ONLINE", new { @class = "form-check-input", id = "pmOnline" })
+                    <label class="form-check-label" for="pmOnline">Online Payment (Simulation)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Order Summary -->
+    <div class="col-md-6">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Product</th>
+                        <th class="text-end">Unit Price (USD)</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-end">Subtotal (USD)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int i = 1;
+                    }
+                    @foreach (var ci in items)
+                    {
+                        var price = ci.Product?.Price ?? 0m;
+                        var subtotal = price * ci.Quantity;
+                        <tr>
+                            <td>@(i++)</td>
+                            <td>@(ci.Product != null ? ci.Product.Name : "—")</td>
+                            <td class="text-end">@price.ToString("C", usd)</td>
+                            <td class="text-center">@ci.Quantity</td>
+                            <td class="text-end">@subtotal.ToString("C", usd)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-end">Total</th>
+                        <th class="text-end">@total.ToString("C", usd)</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="mt-2">
+            <button type="submit" class="btn btn-primary">Confirm Checkout</button>
+            @Html.ActionLink("Back to Cart", "Index", "Cart", null, new { @class = "btn btn-outline-secondary ms-2" })
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        (function () {
+            var $sel = $('#savedAddr');
+            $('#fillAddrBtn').on('click', function () {
+                var $opt = $sel.find('option:selected');
+                if ($opt.length === 0) return;
+
+                // عبّي الحقول من الداتا بالـ option
+                $('#ShipFullName').val($opt.data('fullname'));
+                $('#ShipPhone').val($opt.data('phone'));
+                $('#ShipAddress1').val($opt.data('address1'));
+                $('#ShipAddress2').val($opt.data('address2'));
+                $('#ShipCity').val($opt.data('city'));
+                $('#ShipCountry').val($opt.data('country'));
+            });
+        })();
+    </script>
+}

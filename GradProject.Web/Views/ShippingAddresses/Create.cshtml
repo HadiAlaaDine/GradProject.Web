@@ -1,0 +1,71 @@
+﻿@model GradProject.Web.Models.ShippingAddress
+@{
+    ViewBag.Title = "Add Address";
+}
+
+<h2>Add Address</h2>
+
+@Html.Partial("_Alerts")
+
+@using (Html.BeginForm("Create", "ShippingAddresses", FormMethod.Post, new { @class = "row g-3" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+    <div class="col-12 col-md-6">
+        @Html.LabelFor(m => m.FullName, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.FullName, new { @class = "form-control", placeholder = "Full name" })
+        @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12 col-md-6">
+        @Html.LabelFor(m => m.Phone, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.Phone, new { @class = "form-control", placeholder = "+961…" })
+        @Html.ValidationMessageFor(m => m.Phone, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12">
+        @Html.LabelFor(m => m.AddressLine1, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.AddressLine1, new { @class = "form-control", placeholder = "Street, building…" })
+        @Html.ValidationMessageFor(m => m.AddressLine1, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12">
+        @Html.LabelFor(m => m.AddressLine2, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.AddressLine2, new { @class = "form-control", placeholder = "Apartment, floor (optional)" })
+        @Html.ValidationMessageFor(m => m.AddressLine2, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12 col-md-4">
+        @Html.LabelFor(m => m.City, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.City, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.City, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12 col-md-4">
+        @Html.LabelFor(m => m.State, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.State, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.State, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12 col-md-4">
+        @Html.LabelFor(m => m.PostalCode, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.PostalCode, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.PostalCode, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12 col-md-6">
+        @Html.LabelFor(m => m.Country, new { @class = "form-label" })
+        @Html.TextBoxFor(m => m.Country, new { @class = "form-control" })
+        @Html.ValidationMessageFor(m => m.Country, "", new { @class = "text-danger" })
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">Save</button>
+        @Html.ActionLink("Back", "Index", "ShippingAddresses", null, new { @class = "btn btn-outline-secondary ms-2" })
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
