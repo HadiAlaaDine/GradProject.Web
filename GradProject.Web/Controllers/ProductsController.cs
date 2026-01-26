@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
 using System.Data.Entity;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -15,9 +14,38 @@ namespace GradProject.Web.Controllers
         private readonly ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Products
-        public ActionResult Index()
+        // دالة العرض الرئيسية مع ميزات البحث والفلترة الكاملة
+        public ActionResult Index(string searchString, int? categoryId, decimal? minPrice, decimal? maxPrice)
         {
             var products = db.Products.Include(p => p.Category);
+
+            // 1. بحث بالاسم (أي حرف بيكتبه بيطلع النتيجة)
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                products = products.Where(s => s.Name.Contains(searchString) || s.Description.Contains(searchString));
+            }
+
+            // 2. فلترة بالفئة
+            if (categoryId != null && categoryId != 0)
+            {
+                products = products.Where(x => x.CategoryId == categoryId);
+            }
+
+            // 3. أقل سعر (Min Price)
+            if (minPrice != null)
+            {
+                products = products.Where(x => x.Price >= minPrice);
+            }
+
+            // 4. أعلى سعر (Max Price)
+            if (maxPrice != null)
+            {
+                products = products.Where(x => x.Price <= maxPrice);
+            }
+
+            // إرسال قائمة الفئات للقائمة المنسدلة
+            ViewBag.CategoryId = new SelectList(db.Categories, "Id", "Name");
+
             return View(products.ToList());
         }
 
@@ -25,97 +53,127 @@ namespace GradProject.Web.Controllers
         public ActionResult Details(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-
-            var product = db.Products.Include(p => p.Category).FirstOrDefault(p => p.Id == id);
+            var product = db.Products.Find(id);
             if (product == null) return HttpNotFound();
-
             return View(product);
         }
 
         // GET: Products/Create
+        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
-            ViewBag.CategoryId = new SelectList(db.Categories.OrderBy(c => c.Name), "Id", "Name");
+            ViewBag.CategoryId = new SelectList(db.Categories, "Id", "Name");
             return View();
         }
 
         // POST: Products/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "Id,Name,Description,Price,CategoryId")] Product product)
+        [Authorize(Roles = "Admin")]
+        public ActionResult Create(Product product, HttpPostedFileBase upload)
         {
             if (ModelState.IsValid)
             {
-                product.CreatedAt = DateTime.UtcNow; // يحدد من السيرفر
+                // كود رفع الصورة مع إنشاء المجلد تلقائياً
+                if (upload != null && upload.ContentLength > 0)
+                {
+                    // 1. تحديد مسار المجلد
+                    string uploadDir = Server.MapPath("~/Content/Images");
+
+                    // 2. التأكد من وجود المجلد، وإنشاؤه إذا لم يكن موجوداً
+                    if (!Directory.Exists(uploadDir))
+                    {
+                        Directory.CreateDirectory(uploadDir);
+                    }
+
+                    // 3. حفظ الصورة
+                    var fileName = DateTime.Now.Ticks + "_" + Path.GetFileName(upload.FileName);
+                    var path = Path.Combine(uploadDir, fileName);
+                    upload.SaveAs(path);
+
+                    // 4. حفظ المسار في الداتابيز
+                    product.ImageUrl = "/Content/Images/" + fileName;
+                }
+
                 db.Products.Add(product);
                 db.SaveChanges();
-                TempData["Success"] = "Product created successfully.";
                 return RedirectToAction("Index");
             }
 
-            ViewBag.CategoryId = new SelectList(db.Categories.OrderBy(c => c.Name), "Id", "Name", product.CategoryId);
+            ViewBag.CategoryId = new SelectList(db.Categories, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
         // GET: Products/Edit/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-
             var product = db.Products.Find(id);
             if (product == null) return HttpNotFound();
-
-            ViewBag.CategoryId = new SelectList(db.Categories.OrderBy(c => c.Name), "Id", "Name", product.CategoryId);
+            ViewBag.CategoryId = new SelectList(db.Categories, "Id", "Name", product.CategoryId);
             return View(product);
         }
 
         // POST: Products/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "Id,Name,Description,Price,CategoryId")] Product input)
+        [Authorize(Roles = "Admin")]
+        public ActionResult Edit(Product product, HttpPostedFileBase upload)
         {
             if (ModelState.IsValid)
             {
-                var product = db.Products.Find(input.Id);
-                if (product == null) return HttpNotFound();
+                // إذا رفع صورة جديدة، بنحدثها
+                if (upload != null && upload.ContentLength > 0)
+                {
+                    string uploadDir = Server.MapPath("~/Content/Images");
+                    if (!Directory.Exists(uploadDir))
+                    {
+                        Directory.CreateDirectory(uploadDir);
+                    }
 
-                product.Name = input.Name;
-                product.Description = input.Description;
-                product.Price = input.Price;
-                product.CategoryId = input.CategoryId;
-                // CreatedAt يبقى كما هو
+                    var fileName = DateTime.Now.Ticks + "_" + Path.GetFileName(upload.FileName);
+                    var path = Path.Combine(uploadDir, fileName);
+                    upload.SaveAs(path);
+                    product.ImageUrl = "/Content/Images/" + fileName;
+                }
+                else
+                {
+                    // إذا ما رفع صورة جديدة، بنحافظ على القديمة
+                    var oldProduct = db.Products.AsNoTracking().FirstOrDefault(p => p.Id == product.Id);
+                    if (oldProduct != null)
+                    {
+                        product.ImageUrl = oldProduct.ImageUrl;
+                    }
+                }
 
+                db.Entry(product).State = EntityState.Modified;
                 db.SaveChanges();
-                TempData["Success"] = "Product updated successfully.";
                 return RedirectToAction("Index");
             }
-
-            ViewBag.CategoryId = new SelectList(db.Categories.OrderBy(c => c.Name), "Id", "Name", input.CategoryId);
-            return View(input);
+            ViewBag.CategoryId = new SelectList(db.Categories, "Id", "Name", product.CategoryId);
+            return View(product);
         }
 
         // GET: Products/Delete/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-
-            var product = db.Products.Include(p => p.Category).FirstOrDefault(p => p.Id == id);
+            var product = db.Products.Find(id);
             if (product == null) return HttpNotFound();
-
             return View(product);
         }
 
         // POST: Products/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult DeleteConfirmed(int id)
         {
             var product = db.Products.Find(id);
-            if (product == null) return HttpNotFound();
-
             db.Products.Remove(product);
             db.SaveChanges();
-            TempData["Success"] = "Product deleted successfully.";
             return RedirectToAction("Index");
         }
 

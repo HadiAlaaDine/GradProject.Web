@@ -21,6 +21,9 @@ namespace GradProject.Web.Models
             [DataType(DataType.Currency)]
             public decimal Price { get; set; }
 
+            [Display(Name = "Product Image")]
+            public string ImageUrl { get; set; }
+
             [Display(Name = "Category")]
             public int CategoryId { get; set; }
 

@@ -1,17 +1,32 @@
 ﻿<!DOCTYPE html>
+@using GradProject.Web.Controllers
 <html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewBag.Title - My ASP.NET Application</title>
+    <title>@ViewBag.Title - Click & Pick Store</title>
     @Styles.Render("~/Content/css")
     @Scripts.Render("~/bundles/modernizr")
 
+    <style>
+        body {
+            padding-top: 80px;
+        }
+        /* تنسيق بسيط للاسم الجديد */
+        .brand-style {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: 800; /* خط عريض جداً */
+            letter-spacing: 1px;
+            color: #fff !important; /* لون أبيض ناصع */
+            text-shadow: 0px 0px 10px rgba(24, 188, 156, 0.5); /* وهج خفيف بلون الثيم */
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark fixed-top" style="box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
         <div class="container">
-            @Html.ActionLink("Grad Project", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            @Html.ActionLink("Click & Pick 🖱️", "Index", "Home", new { area = "" }, new { @class = "navbar-brand brand-style", style = "font-size: 1.6rem;" })
+
             <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -19,34 +34,45 @@
             <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
                     <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("About", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+                    <li>@Html.ActionLink("About Us", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
                     <li>@Html.ActionLink("Contact", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
                     <li>@Html.ActionLink("Categories", "Index", "Categories", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Admin", "Index", "Admin", new { area = "" }, new { @class = "nav-link" })</li>
                     <li>@Html.ActionLink("Products", "Index", "Products", new { area = "" }, new { @class = "nav-link" })</li>
+
+                    @{
+                        var cartList = Session["Cart"] as List<CartItem>;
+                        int cartCount = cartList == null ? 0 : cartList.Sum(x => x.Quantity);
+                    }
+
+                    <li class="nav-item" style="position: relative;">
+                        <a href="@Url.Action("Index", "Cart")" class="nav-link" style="color: #18bc9c; font-weight: bold; position: relative; display: inline-block;">
+                            My Cart 🛒
+                            <span id="badgeContainer" style="@(cartCount > 0 ? "" : "display:none;") position: absolute; top: 0px; right: -5px; background-color: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                                <span id="cartBadge">@cartCount</span>
+                            </span>
+                        </a>
+                    </li>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li>@Html.ActionLink("Admin", "Index", "Admin", new { area = "" }, new { @class = "nav-link" })</li>
+                    }
                 </ul>
-                 @Html.Partial("_LoginPartial")
+                @Html.Partial("_LoginPartial")
             </div>
         </div>
     </nav>
     <div class="container body-content">
-
         @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success mt-2" role="alert">@TempData["Success"]</div>
-        }
+        {<div class="alert alert-success mt-2">@TempData["Success"]</div>}
         @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger mt-2" role="alert">@TempData["Error"]</div>
-        }
-
+        {<div class="alert alert-danger mt-2">@TempData["Error"]</div>}
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
+            <p>&copy; @DateTime.Now.Year - <strong>Click & Pick Store</strong>. All rights reserved.</p>
         </footer>
     </div>
-
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
     @RenderSection("scripts", required: false)

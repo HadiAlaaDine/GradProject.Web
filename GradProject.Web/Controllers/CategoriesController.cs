@@ -12,12 +12,14 @@ namespace GradProject.Web.Controllers
         private readonly ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: Categories
+        // مسموح للكل يشوفوا قائمة الفئات
         public ActionResult Index()
         {
             return View(db.Categories.ToList());
         }
 
         // GET: Categories/Details/5
+        // مسموح للكل يشوفوا تفاصيل الفئة
         public ActionResult Details(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
@@ -28,16 +30,21 @@ namespace GradProject.Web.Controllers
             return View(category);
         }
 
+        // ---------------------------------------------------------
+        // منطقة الممنوعات: فقط الأدمن (Admin) بيقدر يفوت هون
+        // ---------------------------------------------------------
+
         // GET: Categories/Create
+        [Authorize(Roles = "Admin")]
         public ActionResult Create()
         {
             return View();
         }
 
         // POST: Categories/Create
-        // CreatedAt لا نستقبلها من المستخدم – نحدّدها من السيرفر
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Create([Bind(Include = "Id,Name,Description")] Category category)
         {
             if (ModelState.IsValid)
@@ -53,6 +60,7 @@ namespace GradProject.Web.Controllers
         }
 
         // GET: Categories/Edit/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
@@ -64,9 +72,9 @@ namespace GradProject.Web.Controllers
         }
 
         // POST: Categories/Edit/5
-        // نحافظ على CreatedAt كما هو، ونعدّل فقط الحقول المسموح بها
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult Edit([Bind(Include = "Id,Name,Description")] Category input)
         {
             if (ModelState.IsValid)
@@ -76,7 +84,6 @@ namespace GradProject.Web.Controllers
 
                 category.Name = input.Name;
                 category.Description = input.Description;
-                // CreatedAt remains unchanged
 
                 db.SaveChanges();
                 TempData["Success"] = "Category updated successfully.";
@@ -87,6 +94,7 @@ namespace GradProject.Web.Controllers
         }
 
         // GET: Categories/Delete/5
+        [Authorize(Roles = "Admin")]
         public ActionResult Delete(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
@@ -100,6 +108,7 @@ namespace GradProject.Web.Controllers
         // POST: Categories/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public ActionResult DeleteConfirmed(int id)
         {
             var category = db.Categories.Find(id);

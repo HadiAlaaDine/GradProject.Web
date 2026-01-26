@@ -1,43 +1,103 @@
 ﻿@model IEnumerable<GradProject.Web.Models.Product>
 
 @{
-    ViewBag.Title = "Products";
+    ViewBag.Title = "Our Menu";
 }
 
-<h2>Products</h2>
+<div class="jumbotron text-center" style="background-color: #ecf0f1; padding: 2rem 1rem; margin-bottom: 2rem; border-radius: 0.3rem;">
+    <h1 class="display-4">Welcome to Our Store! 🛍️</h1>
+    <p class="lead">Best quality, best prices, delivered to your door.</p>
+    @if (User.IsInRole("Admin"))
+    {
+        <p>@Html.ActionLink("Add New Product +", "Create", null, new { @class = "btn btn-primary btn-lg" })</p>
+    }
+</div>
 
-<p>
-    @Html.ActionLink("Create New Product", "Create", null, new { @class = "btn btn-primary mb-2" })
-</p>
+<div class="well" style="background-color: #fff; border: 1px solid #ddd; padding: 20px; margin-bottom: 30px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <h4 style="margin-top: 0; margin-bottom: 15px; color: #2c3e50;">Advanced Search & Filter 🔍</h4>
+    @using (Html.BeginForm("Index", "Products", FormMethod.Get))
+    {
+        <div class="row">
+            <div class="col-md-3"><div class="form-group"><label>Name contains:</label>@Html.TextBox("searchString", null, new { @class = "form-control", placeholder = "e.g. BMW..." })</div></div>
+            <div class="col-md-3"><div class="form-group"><label>Category:</label>@Html.DropDownList("categoryId", (SelectList)ViewBag.CategoryId, "All Categories", new { @class = "form-control" })</div></div>
+            <div class="col-md-2"><div class="form-group"><label>Min Price:</label><input type="number" name="minPrice" class="form-control" placeholder="Min" step="0.01" /></div></div>
+            <div class="col-md-2"><div class="form-group"><label>Max Price:</label><input type="number" name="maxPrice" class="form-control" placeholder="Max" step="0.01" /></div></div>
+            <div class="col-md-2" style="margin-top: 25px;"><button type="submit" class="btn btn-primary btn-block"><i class="glyphicon glyphicon-filter"></i> Filter</button></div>
+        </div>
+        <div class="row"><div class="col-md-12 text-right"><a href="@Url.Action("Index")" class="btn btn-link btn-sm text-danger">Clear All Filters ❌</a></div></div>
+    }
+</div>
 
-<table class="table table-striped table-bordered table-hover">
-    <thead class="table-light">
-        <tr>
-            <th>Category</th>
-            <th>@Html.DisplayNameFor(model => model.Name)</th>
-            <th>@Html.DisplayNameFor(model => model.Description)</th>
-            <th>@Html.DisplayNameFor(model => model.Price)</th>
-            <th>Created At</th>
-            <th style="width:180px;">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <!-- مهم: الوصول المباشر للقيمة، ما نستخدم DisplayFor هون -->
-                <td>@(item.Category != null ? item.Category.Name : "")</td>
-                <td>@Html.DisplayFor(_ => item.Name)</td>
-                <td>@Html.DisplayFor(_ => item.Description)</td>
-                <td>@Html.DisplayFor(_ => item.Price)</td>
-                <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                <td>
-                    @Html.ActionLink("Edit", "Edit", new { id = item.Id }, new { @class = "btn btn-sm btn-warning" })
-                    @Html.ActionLink("Details", "Details", new { id = item.Id }, new { @class = "btn btn-sm btn-info mx-1" })
-                    @Html.ActionLink("Delete", "Delete", new { id = item.Id }, new { @class = "btn btn-sm btn-danger" })
-                </td>
-            </tr>
-            //
-        }
-    </tbody>
-</table>
+<div class="row">
+    @foreach (var item in Model)
+    {
+        <div class="col-md-4 col-sm-6" style="margin-bottom: 30px;">
+            <div class="panel panel-default" style="border-radius: 15px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.3s;">
+                <div style="height: 200px; overflow: hidden; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@Url.Content(item.ImageUrl)" alt="@item.Name" style="width: 100%; height: 100%; object-fit: cover;" />
+                    }
+                    else
+                    { <span style="font-size: 50px; color: #ccc;">📷</span>}
+                </div>
+                <div class="panel-heading" style="background-color: #2c3e50; color: white;">
+                    <h3 class="panel-title" style="font-weight: bold;">@item.Name</h3>
+                </div>
+                <div class="panel-body">
+                    <h4 class="text-success" style="font-weight: bold; font-size: 1.5em;">$@item.Price</h4>
+                    <span class="label label-info">@item.Category.Name</span>
+                    <p style="margin-top: 15px; color: #666; height: 40px; overflow: hidden;">@item.Description</p>
+                    <hr />
+
+                    <a href="@Url.Action("AddToCart", "Cart", new { id = item.Id })" class="btn btn-info btn-block btn-lg ajax-add-to-cart">
+                        Add to Cart 🛒
+                    </a>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="text-center" style="margin-top: 10px; font-size: 0.9em;">
+                            <br />@Html.ActionLink("Edit", "Edit", new { id = item.Id }) | @Html.ActionLink("Delete", "Delete", new { id = item.Id })
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    @if (!Model.Any())
+    {<div class="col-md-12"><div class="alert alert-warning text-center">No products found.</div></div>}
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $(".ajax-add-to-cart").click(function (e) {
+                e.preventDefault(); // وقف الرفرش
+
+                var url = $(this).attr("href"); // خد الرابط
+                var btn = $(this);
+
+                // غير النص ليعرف الزبون إنو انكبس
+                var originalText = btn.html();
+                btn.html("Adding... ⏳").addClass("disabled");
+
+                // ابعت الطلب بالسر
+                $.post(url, function (data) {
+                    // بس يخلص، حدث العداد الأحمر فوق
+                    $("#cartBadge").text(data.count);
+                    $("#badgeContainer").show(); // اظهر الدائرة إذا كانت مخفية
+
+                    // رجع الزر لطبيعته
+                    setTimeout(function() {
+                        btn.html("Added! ✅").removeClass("btn-info").addClass("btn-success");
+                    }, 300);
+
+                    // بعد ثانية رجعه متل ما كان
+                    setTimeout(function() {
+                        btn.html(originalText).removeClass("btn-success disabled").addClass("btn-info");
+                    }, 1500);
+                });
+            });
+        });
+    </script>
+}

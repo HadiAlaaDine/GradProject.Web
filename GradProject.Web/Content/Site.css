@@ -18,3 +18,33 @@ select,
 textarea {
     max-width: 280px;
 }
+
+/* تحسين شكل الناف بار ليصير عريض ومرتب */
+.navbar {
+    border-radius: 0;
+    margin-bottom: 0;
+    font-size: 16px;
+    padding: 10px 0;
+}
+
+.navbar-brand {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+/* تحسين شكل الكروت */
+.panel {
+    border: none;
+    transition: all 0.3s ease;
+}
+
+    .panel:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2) !important;
+    }
+
+/* زر الشراء */
+.btn-success {
+    background-color: #18bc9c;
+    border: none;
+}

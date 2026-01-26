@@ -1,33 +1,182 @@
-﻿@{
+﻿@using GradProject.Web.Models
+@{
     ViewBag.Title = "Home Page";
+
+    // --- العقل الذكي لتصليح الروابط ---
+    ApplicationDbContext db = new ApplicationDbContext();
+
+    // 1. بندور على رقم فئة السيارات
+    var carCat = db.Categories.FirstOrDefault(c => c.Name.Contains("Car"));
+    int carId = carCat != null ? carCat.Id : 0;
+
+    // 2. بندور على رقم فئة التلفونات
+    var phoneCat = db.Categories.FirstOrDefault(c => c.Name.Contains("Phone") || c.Name.Contains("Mobile"));
+    int phoneId = phoneCat != null ? phoneCat.Id : 0;
+
+    // 3. بندور على رقم فئة الكتب
+    var bookCat = db.Categories.FirstOrDefault(c => c.Name.Contains("Book"));
+    int bookId = bookCat != null ? bookCat.Id : 0;
 }
 
-<main>
-    <section class="row" aria-labelledby="aspnetTitle">
-        <h1 id="title">ASP.NET</h1>
-        <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-        <p><a href="https://asp.net" class="btn btn-primary btn-md">Learn more &raquo;</a></p>
-    </section>
+<style>
+    /* تنسيق الصور المربعة */
+    .category-box {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        height: 350px;
+        transition: transform 0.4s, box-shadow 0.4s;
+        background-color: #000; /* لون خلفية احتياطي */
+    }
+
+        .category-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .category-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 1s;
+            opacity: 0.9; /* شفافية بسيطة لدمج الصورة مع الخلفية */
+        }
+
+        .category-box:hover img {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+
+    .category-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+        padding: 30px;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+        .category-caption h2 {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #f1c40f;
+        }
+
+    .btn-custom {
+        border-radius: 50px;
+        padding: 10px 25px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-top: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    /* حركة المثلث (فوق - تحت - فوق) */
+    .margin-top-up {
+        margin-top: 0px;
+    }
+
+    .margin-top-down {
+        margin-top: 60px;
+    }
+
+    /* تنسيق الميزات */
+    .feature-box {
+        padding: 30px 20px;
+        border: 1px solid #eee;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        background-color: #fff;
+        transition: transform 0.3s;
+    }
+
+        .feature-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+    .feature-icon {
+        font-size: 50px;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="container" style="margin-top: 50px; margin-bottom: 100px;">
+    <div class="text-center" style="margin-bottom: 50px;">
+        <h1 class="display-4" style="font-weight: bold; color: #2c3e50;">Explore Our Collections 🌟</h1>
+        <p class="lead" style="color: #7f8c8d;">Handpicked categories just for you.</p>
+    </div>
 
     <div class="row">
-        <section class="col-md-4" aria-labelledby="gettingStartedTitle">
-            <h2 id="gettingStartedTitle">Getting started</h2>
-            <p>
-                ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-                enables a clean separation of concerns and gives you full control over markup
-                for enjoyable, agile development.
-            </p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="librariesTitle">
-            <h2 id="librariesTitle">Get more libraries</h2>
-            <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-        </section>
-        <section class="col-md-4" aria-labelledby="hostingTitle">
-            <h2 id="hostingTitle">Web Hosting</h2>
-            <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-            <p><a class="btn btn-outline-dark" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-        </section>
+        <div class="col-md-4 margin-top-up">
+            <div class="category-box">
+                <img src="https://images.unsplash.com/photo-1494976388531-d1058494cdd8?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Cars">
+                <div class="category-caption">
+                    <h2>Dream Cars 🚗</h2>
+                    <p>Luxury and speed combined.</p>
+                    <a href="@Url.Action("Index", "Products", new { categoryId = carId })" class="btn btn-warning btn-custom">Browse Cars</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 margin-top-down">
+            <div class="category-box">
+                <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Phones">
+                <div class="category-caption">
+                    <h2 style="color: #3498db;">Smart Phones 📱</h2>
+                    <p>Latest technology in your hand.</p>
+                    <a href="@Url.Action("Index", "Products", new { categoryId = phoneId })" class="btn btn-info btn-custom">Shop Phones</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 margin-top-up">
+            <div class="category-box">
+                <img src="https://images.unsplash.com/photo-1512820790803-83ca734da794?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Books">
+                <div class="category-caption">
+                    <h2 style="color: #2ecc71;">Best Sellers 📚</h2>
+                    <p>Stories that inspire.</p>
+                    <a href="@Url.Action("Index", "Products", new { categoryId = bookId })" class="btn btn-success btn-custom">Read Now</a>
+                </div>
+            </div>
+        </div>
     </div>
-</main>
+</div>
+
+<hr />
+
+<div class="container text-center" style="margin-bottom: 50px; margin-top: 50px;">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="feature-box">
+                <span class="glyphicon glyphicon-flash feature-icon" style="color: #f1c40f;"></span>
+                <h3>Fast Delivery</h3>
+                <p>We deliver your orders faster than you can imagine. Same day delivery available.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <span class="glyphicon glyphicon-heart feature-icon" style="color: #e74c3c;"></span>
+                <h3>Quality Guaranteed</h3>
+                <p>We ensure the best quality for all our products. Satisfaction guaranteed.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="feature-box">
+                <span class="glyphicon glyphicon-usd feature-icon" style="color: #2ecc71;"></span>
+                <h3>Cash on Delivery</h3>
+                <p>No credit card needed! Pay cash when you receive your order at your door.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="jumbotron" style="background-color: #2c3e50; color: white; margin-top: 60px; padding: 50px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        <h1 style="font-weight: bold;">Ready to Explore? 🚀</h1>
+        <p class="lead">Dive into our full catalog and find amazing deals.</p>
+        <p><a href="@Url.Action("Index", "Products")" class="btn btn-primary btn-lg btn-custom" style="padding: 15px 40px; font-size: 1.2em;">Go to Store &raquo;</a></p>
+    </div>
+</div>

@@ -170,9 +170,11 @@
     <Compile Include="App_Start\Startup.Auth.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\AdminController.cs" />
+    <Compile Include="Controllers\CartController.cs" />
     <Compile Include="Controllers\CategoriesController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
+    <Compile Include="Controllers\OrdersController.cs" />
     <Compile Include="Controllers\ProductsController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -193,11 +195,28 @@
     <Compile Include="Migrations\202509041643274_AddProduct.Designer.cs">
       <DependentUpon>202509041643274_AddProduct.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202601261804220_FixChanges.cs" />
+    <Compile Include="Migrations\202601261804220_FixChanges.Designer.cs">
+      <DependentUpon>202601261804220_FixChanges.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202601261830342_AddOrderTable.cs" />
+    <Compile Include="Migrations\202601261830342_AddOrderTable.Designer.cs">
+      <DependentUpon>202601261830342_AddOrderTable.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202601261838125_FixDatabaseSync.cs" />
+    <Compile Include="Migrations\202601261838125_FixDatabaseSync.Designer.cs">
+      <DependentUpon>202601261838125_FixDatabaseSync.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202601261914294_AddProductImage.cs" />
+    <Compile Include="Migrations\202601261914294_AddProductImage.Designer.cs">
+      <DependentUpon>202601261914294_AddProductImage.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Models\ManageViewModels.cs" />
+    <Compile Include="Models\Order.cs" />
     <Compile Include="Models\Product.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
@@ -284,9 +303,12 @@
     <Content Include="Views\Products\Details.cshtml" />
     <Content Include="Views\Products\Edit.cshtml" />
     <Content Include="Views\Products\Index.cshtml" />
+    <Content Include="Views\Orders\Create.cshtml" />
+    <Content Include="Views\Cart\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Controllers\Images\" />
     <Folder Include="Views\Admin\" />
   </ItemGroup>
   <ItemGroup>
@@ -328,6 +350,18 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202509041643274_AddProduct.resx">
       <DependentUpon>202509041643274_AddProduct.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601261804220_FixChanges.resx">
+      <DependentUpon>202601261804220_FixChanges.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601261830342_AddOrderTable.resx">
+      <DependentUpon>202601261830342_AddOrderTable.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601261838125_FixDatabaseSync.resx">
+      <DependentUpon>202601261838125_FixDatabaseSync.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202601261914294_AddProductImage.resx">
+      <DependentUpon>202601261914294_AddProductImage.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
